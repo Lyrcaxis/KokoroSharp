@@ -26,13 +26,16 @@ public class KokoroEngine : IDisposable {
             catch (OperationCanceledException) {
                 // If cancellation was requested just swallow the cancellation exception and exit.
             }
+
+            foreach (var kokoroJob in queuedJobs.GetConsumingEnumerable())
+                kokoroJob.Cancel();
+            queuedJobs.Dispose();
         }).Start();
     }
 
     /// <summary> Enqueues a job for the Kokoro TTS engine, scheduling it to be processed when the engine is free. </summary>
     /// <remarks> The job will be automatically dispatched when all prior jobs have been completed or canceled. Canceled jobs resolve and get skipped when their order arrives. </remarks>
     public KokoroJob EnqueueJob(KokoroJob job) {
-        ObjectDisposedException.ThrowIf(cancellation.IsCancellationRequested, this);
         queuedJobs.Add(job);
         return job;
     }
@@ -40,9 +43,8 @@ public class KokoroEngine : IDisposable {
     /// <summary> Immediately cancels any ongoing registered jobs and playbacks, frees memory taken by the model, and notifies the background worker thread to exit. </summary>
     /// <remarks> Note that this will not free up memory that the voices take (~25MB if ALL languages are loaded). </remarks>
     public virtual void Dispose() {
+        queuedJobs.CompleteAdding();
         cancellation.Cancel();
-        foreach (var job in queuedJobs) { job.Cancel(); }
-        queuedJobs.Dispose();
         model.Dispose();
         GC.SuppressFinalize(this);
     }
