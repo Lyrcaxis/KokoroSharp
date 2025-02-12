@@ -9,7 +9,7 @@ using System.Collections.Concurrent;
 public class KokoroEngine : IDisposable {
     protected readonly KokoroModel model;
     protected readonly BlockingCollection<KokoroJob> queuedJobs = [];
-    private readonly CancellationTokenSource cancellation = new();
+    readonly CancellationTokenSource cancellation = new();
 
     /// <summary> Creates a new Kokoro Engine instance, loading the model into memory and initializing a background worker thread to continuously scan for newly queued jobs, dispatching them in order, when it's free. </summary>
     /// <remarks> If 'options' is specified, the model will be loaded with them. This is particularly useful when needing to run on non-CPU backends, as the default backend otherwise is the CPU with 8 threads. </remarks>
