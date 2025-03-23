@@ -12,6 +12,9 @@ public static class KokoroVoiceManager {
     /// <summary> Gathers and loads all voices on the specified path. ("voices" is the default path the Nuget Package bundles the voices at). </summary>
     /// <remarks> This exists in case developers want to ship their project with custom paths or use custom voice loading logic. </remarks>
     public static void LoadVoicesFromPath(string voicesPath = "voices") {
+        if (voicesPath == "voices")
+            voicesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, voicesPath);
+
         if (!Directory.Exists(voicesPath)) { throw new DirectoryNotFoundException(); }
         var voiceFilePaths = Directory.GetFiles(voicesPath);
 

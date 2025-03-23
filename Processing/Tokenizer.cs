@@ -21,7 +21,7 @@ public static class Tokenizer {
 
     /// <summary> Path to the folder in which the espeak-ng binaries and data reside. Defaults to the folder created by the NuGet package. </summary>
     /// <remarks> Can be overriden with a custom path if a use-case requires so. </remarks>
-    public static string eSpeakNGPath { get; set; } = Path.Combine(Directory.GetCurrentDirectory(), "espeak");
+    public static string eSpeakNGPath { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "espeak");
 
     public static IReadOnlyDictionary<char, int> Vocab { get; }
     public static IReadOnlyDictionary<int, char> TokenToChar { get; }
