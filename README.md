@@ -23,7 +23,7 @@ With a custom phonemization solution, these additional languages are also suppor
 - `[MandarinChinese, Japanese, Hindi]`.
 
 ## How to setup
-- **On Windows, Linux, and MacOS:** Install via **Nuget** ([Package Manager](https://learn.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-in-visual-studio) or [CLI](https://learn.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-using-the-dotnet-cli)), and you're set!
+- **On Windows, Linux, and MacOS:** Install via **Nuget** ([Package Manager](https://learn.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-in-visual-studio) or [CLI](https://learn.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-using-the-dotnet-cli)) and you install your [onnx runtime](https://onnxruntime.ai/docs/install/)!, and you're set!
 - **On Other platforms**: For platforms other than the ones above, developers are expected to provide their own phonemization solution. The built-in tokenizer supports raw `(phonemes -> tokens)` conversion.
 
 ###### The package is accessible on all .NET platforms, yet integrated phonemization is only available with the eSpeak NG backend atm.
