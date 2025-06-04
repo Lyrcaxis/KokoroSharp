@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 /// <para> Internally preprocesses and post-processes the input text to bring it closer to what the model expects to see. </para>
 /// <para> Phonemization happens via the espeak-ng library: <b>https://github.com/espeak-ng/espeak-ng/blob/master/docs/guide.md</b> </para>
 /// </remarks>
-public static class Tokenizer {
+public static partial class Tokenizer {
     static HashSet<char> spaceNeedingPhonemes = [.. "\"…<«“"];
     static HashSet<char> replaceablePhonemes = [.. "\n;:,.!?¡¿—…\"«»“”()"];
     internal static HashSet<char> punctuation = [.. ";:,.!?…¿\n"];   // Lines split on any of these occurences, by design via espeak-ng.
@@ -82,25 +82,25 @@ public static class Tokenizer {
     /// <summary> Normalizes the input text to what the Kokoro model would expect to see, preparing it for phonemization. </summary>
     /// <remarks> In addition, converts various "written" text to "spoken" form (e.g. $1 --> "one dollar" instead of "dollar one". </remarks>
     internal static string PreprocessText(string text, string langCode) {
-        text = Regex.Replace(text, @"\[(.*?)\]\(.*?\)", "$1"); // Discard links appearing in `[Header](link)` format.
-        text = Regex.Replace(text, @"\[.*?\[(.*?)\].*?\]\(.*?\)|\[(.*?)\]\(.*?\)", "$1$2"); // And in [Header[(img](link)]
+        text = HeaderLink().Replace(text, "$1"); // Discard links appearing in `[Header](link)` format.
+        text = HeaderImgLink().Replace(text, "$1$2"); // And in [Header[(img](link)]
         for (int i = 0; i < 5; i++) {
-            text = Regex.Replace(text, @"(\d)\.(\d)", m => m.Value.Replace(".", " point "));
-            text = Regex.Replace(text, @"\b(https?://)?(www\.)?[a-zA-Z0-9]+\b|\b[a-zA-Z0-9]+\.(com|net|org|io|edu|gov|mil|info|biz|co|us|uk|ca|de|fr|jp|au|cn|ru|gr)\b", m => m.Value.Replace(".", " dot "));
+            text = DecimalPoint().Replace(text, "$1 point $2");
+            text = WebUrl().Replace(text, m => m.Value.Replace(".", " dot "));
         }
         text = text.Replace("\r\n", "\n");
-        text = Regex.Replace(text, @"^```[A-Za-z]{0,10}\n([\s\S]*?)\n```(?:\n|$)", m => {
+        text = CodeBlock().Replace(text, m => {
             var lines = m.Groups[1].Value.Split('\n');
             for (int i = 0; i < lines.Length; i++) {
                 int com = Math.Max(lines[i].IndexOf("//"), lines[i].IndexOf("#"));
                 lines[i] = (com >= 0 ? lines[i][..com] : lines[i]).Replace(".", " dot ") + (com >= 0 ? lines[i][com..] : "");
             }
             return string.Join("\n", lines);
-        }, RegexOptions.Multiline);
-        text = Regex.Replace(text, @"^```[a-zA-Z]{0,10}\n([\s\S]*?)\n```(?:\n|$)", m => m.Groups[1].Value.Replace("  dot ", ".").Replace("dot \n", ".\n"), RegexOptions.Multiline);
-        text = Regex.Replace(text, @"(?<!`)`([^`]+)`(?!`)", m => m.Groups[1].Value.Replace(".", " dot "));
+        });
+        text = CodeBlock().Replace(text, m => m.Groups[1].Value.Replace("  dot ", ".").Replace("dot \n", ".\n"));
+        text = TickQuote().Replace(text, m => m.Groups[1].Value.Replace(".", " dot "));
         text = text.Replace("C#", "C SHARP").Replace(".NET", "dot net").Replace("->", " to ");
-        text = Regex.Replace(text, @"\b(\d+(?:\.\d+)?)(KB|MB|GB|TB)(\s)", m => {
+        text = ByteNumber().Replace(text, m => {
             string u = m.Groups[2].Value switch {
                 "KB" => " kilobyte",
                 "MB" => " megabyte",
@@ -119,12 +119,12 @@ public static class Tokenizer {
             .Replace("\n#", "\n Header: ");
         text = text.Replace(".com", "dot com").Replace("https://", "https ");
         text = text.Replace("\r\n", "\n").Replace("**", "*").Replace("‘", "\"").Replace("’", "\"");
-        text = Regex.Replace(text, @"[$€£¥₹₽₩₺₫]\d+(?:\.\d+)?", FlipMoneyMatch);
-        text = Regex.Replace(text, @"\bD[Rr]\.(?= [A-Z])", "Doctor");
-        text = Regex.Replace(text, @"\b(Mr|MR)\.(?= [A-Z])", "Mister");
-        text = Regex.Replace(text, @"\b(Ms|MS)\.(?= [A-Z])", "Miss");
-        text = Regex.Replace(text, @"\x20{2,}", " ");
-        text = Regex.Replace(text, @"(?<!\:)\b([1-9]|1[0-2]):([0-5]\d)\b(?!\:)", m => $"{m.Groups[1].Value} {m.Groups[2].Value}");
+        text = Money().Replace(text, FlipMoneyMatch);
+        text = Doctor().Replace(text, "Doctor");
+        text = Mister().Replace(text, "Mister");
+        text = Miss().Replace(text, "Miss");
+        text = WhiteSpace().Replace(text," ");
+        text = Time().Replace(text, "$1 $2");
         text = text.Replace("{", ",").Replace("}", ",").Replace("(", ",").Replace(")", ",");
         foreach (var c in deletableCharacters) { text = text.Replace(c.ToString(), " "); }
         foreach (var punc in punctuation) {
@@ -194,4 +194,24 @@ public static class Tokenizer {
         phonemes = phonemes.Replace("ː ", " ").Replace("ɔː", "ˌɔ").Replace("\n ", "\n");
         return new string(phonemes.Where(Vocab.ContainsKey).ToArray());
     }
+
+    #region Regexes
+
+    [GeneratedRegex(@"\b(https?://)?(www\.)?[a-zA-Z0-9]+\b|\b[a-zA-Z0-9]+\.(com|net|org|io|edu|gov|mil|info|biz|co|us|uk|ca|de|fr|jp|au|cn|ru|gr)\b")]
+                                                                     private static partial Regex WebUrl();
+    [GeneratedRegex(@"^```[A-Za-z]{0,10}\n([\s\S]*?)\n```(?:\n|$)", RegexOptions.Multiline)]
+                                                                     private static partial Regex CodeBlock();
+    [GeneratedRegex(@"\[(.*?)\]\(.*?\)")]                            private static partial Regex HeaderLink();
+    [GeneratedRegex(@"\[.*?\[(.*?)\].*?\]\(.*?\)|\[(.*?)\]\(.*?\)")] private static partial Regex HeaderImgLink();
+    [GeneratedRegex(@"(\d)(\.)(\d)")]                                private static partial Regex DecimalPoint();
+    [GeneratedRegex(@"(?<!`)`([^`]+)`(?!`)")]                        private static partial Regex TickQuote();
+    [GeneratedRegex(@"\b(\d+(?:\.\d+)?)(KB|MB|GB|TB)(\s)")]          private static partial Regex ByteNumber();
+    [GeneratedRegex(@"[$€£¥₹₽₩₺₫]\d+(?:\.\d+)?")]                    private static partial Regex Money();
+    [GeneratedRegex(@"\bD[Rr]\.(?= [A-Z])")]                         private static partial Regex Doctor();
+    [GeneratedRegex(@"\b(Mr|MR)\.(?= [A-Z])")]                       private static partial Regex Mister();
+    [GeneratedRegex(@"\b(Ms|MS)\.(?= [A-Z])")]                       private static partial Regex Miss();
+    [GeneratedRegex(@"\x20{2,}")]                                    private static partial Regex WhiteSpace();
+    [GeneratedRegex(@"(?<!\:)\b([1-9]|1[0-2]):([0-5]\d)\b(?!\:)")]   private static partial Regex Time();
+
+    #endregion Regexes
 }
