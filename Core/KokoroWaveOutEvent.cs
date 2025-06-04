@@ -101,7 +101,7 @@ public class LinuxAudioPlayer : KokoroWaveOutEvent {
             else { stream.Position = (int) ((sw.ElapsedMilliseconds / 1000f) * stream.WaveFormat.AverageBytesPerSecond); }
 
             state = PlaybackState.Stopped;
-        });
+        }) { IsBackground = true };
         streamThread.Start();
 
         unsafe void FillALBuffer(int buffer, byte[] data) { fixed (byte* ptr = data) { AL.BufferData(buffer, ALFormat.Mono16, (IntPtr) ptr, data.Length, stream.WaveFormat.SampleRate); } }

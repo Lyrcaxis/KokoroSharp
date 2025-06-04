@@ -19,7 +19,7 @@ public class KokoroEngine : IDisposable {
             foreach (var kokoroJob in queuedJobs.GetConsumingEnumerable()) {
                 while (!kokoroJob.isDone) { kokoroJob.Progress(model); }
             }
-        }).Start();
+        }) { IsBackground = true }.Start();
     }
 
     /// <summary> Enqueues a job for the Kokoro TTS engine, scheduling it to be processed when the engine is free. </summary>
