@@ -3,13 +3,16 @@
 using NAudio.Wave;
 
 using OpenTK.Audio.OpenAL;
-
+using SoundFlow.Backends.MiniAudio;
+using SoundFlow.Components;
+using SoundFlow.Providers;
 using System.Diagnostics;
 
 /// <summary> Base class for cross platform audio playback, with API mostly compatible with NAudio's <see cref="WaveOutEvent"/> API. </summary>
 /// <remarks> Each platform (Windows/Linux/MacOS) derives from this to expose a nice interface back to KokoroSharp. </remarks>
-public abstract class KokoroWaveOutEvent {
-    public RawSourceWaveStream stream { get; private set; }
+public abstract class KokoroWaveOutEvent
+{
+    public RawSourceWaveStream stream { get; protected set; }
 
     /// <summary> The state of the playback (Playing/Stopped). </summary>
     public abstract PlaybackState PlaybackState { get; }
@@ -31,14 +34,15 @@ public abstract class KokoroWaveOutEvent {
 
     /// <summary> Gets the percentage of how much audio has already been played back. </summary>
     /// <remarks> NOTE that for non-windows platforms, this is an approximate. </remarks>
-    public virtual float CurrentPercentage => stream.Position / (float) stream.Length;
+    public virtual float CurrentPercentage => stream.Position / (float)stream.Length;
 
     /// <summary> Pause not supported for simplicity. </summary>
     public void Pause() => throw new NotImplementedException("We're not gonna support this.");
 }
 
 // A wrapper for NAudio's WaveOutEvent.
-public class WindowsAudioPlayer : KokoroWaveOutEvent {
+public class WindowsAudioPlayer : KokoroWaveOutEvent
+{
     readonly WaveOutEvent waveOut = new();
     public override PlaybackState PlaybackState => waveOut.PlaybackState;
     public override void Dispose() => waveOut.Dispose();
@@ -49,83 +53,52 @@ public class WindowsAudioPlayer : KokoroWaveOutEvent {
 
 public class MacOSAudioPlayer : LinuxAudioPlayer { }
 
-// Warning: Terrible, TERRIBLE code..
-public class LinuxAudioPlayer : KokoroWaveOutEvent {
-    public static int BufferSize = 4096 * 64;   // Yes it's long. Could use help to optimize.
-    public static int BufferCount = 256; // 64 MB. Devs can shorten it if needed.
+public class LinuxAudioPlayer : KokoroWaveOutEvent
+{
+    private static readonly MiniAudioEngine _audioEngine = new(KokoroPlayback.waveFormat.SampleRate,
+        SoundFlow.Enums.Capability.Playback);
 
-    int source;
-    int[] buffers;
-    Thread streamThread;
-    bool stopRequested;
-    PlaybackState state = PlaybackState.Stopped;
+    private bool _isDisposed = false;
+    private SoundPlayer _player = null!;
 
-    public override PlaybackState PlaybackState => state;
+    private PlaybackState _pState = PlaybackState.Stopped;
 
-    // ATM it's joining and creating new thread each time. Not the best idea.
-    public override void Play() {
-        if (streamThread != null) { Stop(); }
-        var device = ALC.OpenDevice(null);
-        var context = ALC.CreateContext(device, (int[]) null);
-        ALC.MakeContextCurrent(context);
-        source = AL.GenSource();
-        buffers = AL.GenBuffers(BufferCount);
-        stopRequested = false;
+    public override PlaybackState PlaybackState => _pState;
 
-        // Initialize the buffer
-        for (int i = 0; i < BufferCount; i++) {
-            if (GetBufferFromStream() is not byte[] data) { break; }
-            FillALBuffer(buffers[i], data);
-        }
-        AL.SourceQueueBuffers(source, buffers);
-        AL.SourcePlay(source);
-        state = PlaybackState.Playing;
-
-        streamThread = new Thread(() => {
-            AL.GetSource(source, ALGetSourcei.BuffersProcessed, out int processed);
-
-            var sw = Stopwatch.StartNew();
-            while (processed-- > 0 && !stopRequested) {
-                int buf = AL.SourceUnqueueBuffer(source);
-                if (GetBufferFromStream() is not byte[] data) { break; }
-                FillALBuffer(buf, data);
-                AL.SourceQueueBuffer(source, buf);
-                Thread.Sleep(10);
-            }
-
-            while (!stopRequested && AL.GetSource(source, ALGetSourcei.SourceState) == (int) ALSourceState.Playing) {
-                stream.Position = (int) ((sw.ElapsedMilliseconds / 1000f) * stream.WaveFormat.AverageBytesPerSecond);
-                Thread.Sleep(10);
-            }
-            if (!stopRequested) { stream.Position = stream.Length; }
-            else { stream.Position = (int) ((sw.ElapsedMilliseconds / 1000f) * stream.WaveFormat.AverageBytesPerSecond); }
-
-            state = PlaybackState.Stopped;
-        });
-        streamThread.Start();
-
-        unsafe void FillALBuffer(int buffer, byte[] data) { fixed (byte* ptr = data) { AL.BufferData(buffer, ALFormat.Mono16, (IntPtr) ptr, data.Length, stream.WaveFormat.SampleRate); } }
-        byte[] GetBufferFromStream() {
-            var buffer = new byte[BufferSize];
-            int bytesRead = stream.Read(buffer, 0, BufferSize);
-            if (bytesRead < BufferSize) { Array.Resize(ref buffer, bytesRead); }
-            return bytesRead > 0 ? buffer : null;
-        }
+    public new void Init(RawSourceWaveStream input)
+    {
+        stream = input;
+        _player = new SoundPlayer(new AssetDataProvider(stream));
     }
 
-    public override void Stop() => Dispose();
-    public override void SetVolume(float volume) => AL.Source(source, ALSourcef.Gain, Math.Clamp(volume, 0, 1f)); // Technically supports > 1 volume but not sure if it's a good idea.
-    public override void Dispose() {
-        AL.SourceStop(source);
-        state = PlaybackState.Stopped;
-        stopRequested = true;
-        streamThread?.Join();
-        streamThread = null;
-        AL.DeleteSource(source);
-        AL.DeleteBuffers(buffers);
-        var context = ALC.GetCurrentContext();
-        var device = ALC.GetContextsDevice(context);
-        ALC.DestroyContext(context);
-        ALC.CloseDevice(device);
+    public override void Play()
+    {
+        _player.Play();
+        _pState = PlaybackState.Playing;
+    }
+
+    public override void Stop()
+    {
+        _player.Stop();
+        _pState = PlaybackState.Stopped;
+    }
+
+    public override void SetVolume(float volume)
+    {
+        _player.Volume = volume;
+    }
+
+    public override void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _player?.Stop();
+        _pState = PlaybackState.Stopped;
+
+        //_audioEngine.Dispose(); // Can we manage this lifetime better?
+        _isDisposed = true;
     }
 }

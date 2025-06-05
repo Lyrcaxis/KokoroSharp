@@ -24,6 +24,7 @@
         <PackageReference Include="NAudio" Version="2.2.1" />
         <PackageReference Include="NumSharp" Version="0.30.0" />
         <PackageReference Include="OpenTK.Audio.OpenAL" Version="5.0.0-pre.13" />
+        <PackageReference Include="SoundFlow" Version="1.1.0" />
         <PackageReference Include="System.Numerics.Tensors" Version="9.0.5" />
     </ItemGroup>
 
