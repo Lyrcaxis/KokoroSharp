@@ -46,7 +46,7 @@ public class KokoroJob {
 
 
     /// <summary> An instance of an inference step of a KokoroJob. This typically contains a segment (part of the whole input). </summary>
-    /// <remarks> All steps are performed in order, and will block execution of future staps and jobs, enabling linear scheduling. </remarks>
+    /// <remarks> All steps are performed in order, and will block execution of future steps and jobs, enabling linear scheduling. </remarks>
     public class KokoroJobStep {
         public float Speed { get; init; }
         public int[] Tokens { get; init; }

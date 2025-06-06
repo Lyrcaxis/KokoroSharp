@@ -6,7 +6,7 @@ using KokoroSharp.Processing;
 using System.Runtime.InteropServices;
 
 /// <summary> Contains functionality regarding cross-platform compatibility, like providing the path to the appropriate binaries, and setting up the correct audio player. </summary>
-/// <remarks> All platform-specific functionality splits will go thorugh this class. </remarks>
+/// <remarks> All platform-specific functionality splits will go through this class. </remarks>
 public static class CrossPlatformHelper {
 
     /// <summary> Retrieves the path for the appropriate espeak-ng binaries based on the platform and architecture. </summary>

@@ -43,9 +43,9 @@ public static class SegmentationSystem {
 
             // If there was no *proper* end_seq punctuation [.:!?] found on the phrase, we can start searching for fallback punctuation.
             foreach (var fallbackEndToken in fallbackEndTokens) {  // This includes comma and space at the moment, in this order.
-                if (reusableTempList.Contains(fallbackEndToken)) { // So, a split on a 'comma' character will be prefered over a split on 'space'.
+                if (reusableTempList.Contains(fallbackEndToken)) { // So, a split on a 'comma' character will be preferred over a split on 'space'.
                     AddRange(reusableTempList.LastIndexOf(fallbackEndToken));
-                    break; // For the first segment, we'll take the FIRST occassion for a quick response. For the rest, the last occassion.
+                    break; // For the first segment, we'll take the FIRST occasion for a quick response. For the rest, the last occasion.
                 }
             }
             if (reusableTempList.Count == 0) { continue; }

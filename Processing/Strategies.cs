@@ -10,7 +10,7 @@ public delegate List<int[]> SegmentationDelegate(int[] tokens);
 /// <summary>
 /// <para> Allows defining various rules regarding the TTS pipeline. Has nice defaults, and is fully customizable. </para>
 /// <para> <b>- Segmentation:</b> allows *chunking* the text so the first parts of it will be processed quicker. </para>
-/// <para> <b>- Speech Pauses:</b> allows finetuning the pauses between segments, based on the punctuation character that separates the two segments. </para>
+/// <para> <b>- Speech Pauses:</b> allows fine-tuning the pauses between segments, based on the punctuation character that separates the two segments. </para>
 /// </summary>
 public class KokoroTTSPipelineConfig {
     /// <summary> Single-handedly handles the "text chunking". Can be customized to handle specific use-cases and application needs dynamically. </summary>
@@ -54,11 +54,11 @@ public class PauseAfterSegmentStrategy {
     /// <summary> A map containing the amount of seconds that should be waited after a segment with specific punctuation on the end was spoken. </summary>
     IReadOnlyDictionary<char, float> endingPunctuationPauseSecondsMap { get; }
 
-    public PauseAfterSegmentStrategy(float CommaPause = 0.1f, float PeriodPause = 0.5f, float QuestionmarkPause = 0.5f, float ExclamationMarkPause = 0.5f, float NewLinePause = 0.5f, float OthersPause = 0.5f) {
+    public PauseAfterSegmentStrategy(float CommaPause = 0.1f, float PeriodPause = 0.5f, float QuestionMarkPause = 0.5f, float ExclamationMarkPause = 0.5f, float NewLinePause = 0.5f, float OthersPause = 0.5f) {
         endingPunctuationPauseSecondsMap = new Dictionary<char, float>() {
             { ',', CommaPause },
             { '.', PeriodPause },
-            { '?', QuestionmarkPause },
+            { '?', QuestionMarkPause },
             { '!', ExclamationMarkPause },
             { '\n', NewLinePause },
             { '¿', OthersPause }

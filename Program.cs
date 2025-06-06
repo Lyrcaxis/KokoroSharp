@@ -38,7 +38,7 @@ internal class Program {
 
             // The easiest way to do text-to-speech with Kokoro is by invoking `tts.Speak()`/`tts.SpeakFast()` directly with input text.
             tts.SpeakFast(txt, KokoroVoiceManager.Mix([(sarah, Mix.a), (nicole, Mix.b)])); // Segmented with various rules (see `Segmentation.cs`). Getting an ~instant response, with a potential quality hit.
-            //tts.Speak(txt, KokoroVoiceManager.Mix([(sarah, mix.a), (nicole, mix.b)]));   // Without segmentations; increasing the playback response time, but may offer increased quality.
+            //tts.Speak(txt, KokoroVoiceManager.Mix([(sarah, mix.a), (nicole, mix.b)]));   // Without segmentation; increasing the playback response time, but may offer increased quality.
             continue; // Comment out this line to proceed.
 
 

@@ -158,7 +158,7 @@ public sealed partial class KokoroTTS : KokoroEngine {
             // Let's assume the amount of spoken phonemes linearly matches the percentage.
             var T = (int) Math.Round(step.Tokens.Length * t.percentage); // L * t
             var phonemesSpokenGuess = step.Tokens.Take(T).Select(x => Tokenizer.TokenToChar[x]);
-            var cancelationPacket = new SpeechCancellationPacket() {
+            var cancellationPacket = new SpeechCancellationPacket() {
                 RelatedJob = job,
                 RelatedStep = step,
                 SpokenText_BestGuess = MakeBestGuess(t.percentage, step.Tokens.Select(x => Tokenizer.TokenToChar[x]).ToArray()),
@@ -166,8 +166,8 @@ public sealed partial class KokoroTTS : KokoroEngine {
                 PhonemesSpoken_PrevSegments_Certain = [.. phonemesCache],
                 PhonemesSpoken_LastSegment_BestGuess = [.. phonemesSpokenGuess]
             };
-            OnSpeechCanceled?.Invoke(cancelationPacket);
-            handle.OnSpeechCanceled?.Invoke(cancelationPacket);
+            OnSpeechCanceled?.Invoke(cancellationPacket);
+            handle.OnSpeechCanceled?.Invoke(cancellationPacket);
             phonemesCache.AddRange(phonemesSpokenGuess);
         }
 

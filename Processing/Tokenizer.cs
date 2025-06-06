@@ -14,13 +14,13 @@ using System.Text.RegularExpressions;
 public static partial class Tokenizer {
     static HashSet<char> spaceNeedingPhonemes = [.. "\"…<«“"];
     static HashSet<char> replaceablePhonemes = [.. "\n;:,.!?¡¿—…\"«»“”()"];
-    internal static HashSet<char> punctuation = [.. ";:,.!?…¿\n"];   // Lines split on any of these occurences, by design via espeak-ng.
+    internal static HashSet<char> punctuation = [.. ";:,.!?…¿\n"];   // Lines split on any of these occurrences, by design via espeak-ng.
     static Dictionary<char, string> currencies = new() { { '$', "dollar" }, { '€', "euro" }, { '£', "pound" }, { '¥', "yen" }, { '₹', "rupee" }, { '₽', "ruble" }, { '₩', "won" }, { '₺', "lira" }, { '₫', "dong" } };
     static char[] deletableCharacters = [.. "-`()[]{}"];
     //static int[] z ; // tokens that might be of interest later.
 
     /// <summary> Path to the folder in which the espeak-ng binaries and data reside. Defaults to the folder created by the NuGet package. </summary>
-    /// <remarks> Can be overriden with a custom path if a use-case requires so. </remarks>
+    /// <remarks> Can be overridden with a custom path if a use-case requires so. </remarks>
     public static string eSpeakNGPath { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "espeak");
 
     public static IReadOnlyDictionary<char, int> Vocab { get; }

@@ -27,7 +27,7 @@ public class KokoroVoice {
     /// <summary> Exports the voice on specified path. The voice can later be retrieved again with <see cref="FromPath(string)"/>. </summary>
     public void Export(string filePath) => NumSharp.np.Save(Features, filePath);
 
-    /// <summary> Rename the following voice to have it adhere to specific language and gender pronounciation rules. </summary>
+    /// <summary> Rename the following voice to have it adhere to specific language and gender pronunciation rules. </summary>
     public void Rename(string name, KokoroLanguage language, KokoroGender gender) => this.name = $"{(char) language}{(char) gender}_{name}";
 
     /// <summary> Loads an exported voice from specified file path. </summary>

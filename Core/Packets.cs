@@ -43,7 +43,7 @@ public struct SpeechCancellationPacket {
     /// <remarks> Note that these have <b>INDEED</b> been spoken but they do NOT include the last segment's phonemes. </remarks>
     public char[] PhonemesSpoken_PrevSegments_Certain;
 
-    /// <summary> The phonemes that were spoken on the last segment before cancelation... <b>probably (!)</b> </summary>
+    /// <summary> The phonemes that were spoken on the last segment before cancellation... <b>probably (!)</b> </summary>
     /// <remarks> Note that these ONLY include the last segment's <b>best guess</b> of phonemes, based on the percentage spoken. </remarks>
     public char[] PhonemesSpoken_LastSegment_BestGuess;
 

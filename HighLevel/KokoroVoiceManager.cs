@@ -9,7 +9,7 @@ public static class KokoroVoiceManager {
     public static List<KokoroVoice> Voices { get; } = [];
     static HashSet<string> loadedFilePaths = [];
 
-    /// <summary> Gathers and loads all voices on the specified path. ("voices" is the default path the Nuget Package bundles the voices at). </summary>
+    /// <summary> Gathers and loads all voices on the specified path. ("voices" is the default path the NuGet Package bundles the voices at). </summary>
     /// <remarks> This exists in case developers want to ship their project with custom paths or use custom voice loading logic. </remarks>
     public static void LoadVoicesFromPath(string voicesPath = "voices") {
         if (voicesPath == "voices")
@@ -27,7 +27,7 @@ public static class KokoroVoiceManager {
     }
 
     /// <summary> Retrieves a loaded voice by name, including the language and gender prefix. Use <b>GetVoices</b> to see the full list. </summary>
-    /// <remarks> Customly mixed voices will not be considered unless named and added to <see cref="Voices"/>. </remarks>
+    /// <remarks> Custom mixed voices will not be considered unless named and added to <see cref="Voices"/>. </remarks>
     public static KokoroVoice GetVoice(string name) {
         if (Voices.Count == 0) { LoadVoicesFromPath(); }
         return Voices.First(x => x.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
