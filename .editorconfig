@@ -82,6 +82,8 @@ csharp_style_expression_bodied_lambdas = true:suggestion
 csharp_style_expression_bodied_local_functions = true:suggestion
 csharp_style_throw_expression = true:suggestion
 csharp_style_prefer_null_check_over_type_check = true:suggestion
+csharp_new_line_before_open_brace = none
+csharp_space_after_cast = true
 
 # SYSLIB1045: Convert to 'GeneratedRegexAttribute'.
 dotnet_diagnostic.SYSLIB1045.severity = none
@@ -155,3 +157,5 @@ dotnet_style_prefer_compound_assignment = true:suggestion
 dotnet_style_prefer_simplified_interpolation = true:suggestion
 dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
 dotnet_style_namespace_match_folder = false:silent
+dotnet_sort_system_directives_first = false
+dotnet_separate_import_directive_groups = true
