@@ -84,8 +84,10 @@ public static partial class Tokenizer {
     internal static string PreprocessText(string text, string langCode) {
         text = HeaderLink().Replace(text, "$1"); // Discard links appearing in `[Header](link)` format.
         text = HeaderImgLink().Replace(text, "$1$2"); // And in [Header[(img](link)]
+        text = Money().Replace(text, "$2 $1 $3"); // Convert money amounts like "$1.50" to "1 $ 50".
+        text = Money2().Replace(text, "$1 $3 $2"); // Convert money amounts like "1.50€" to "1 € 50".
         for (int i = 0; i < 5; i++) {
-            text = DecimalPoint().Replace(text, "$1 point $3");
+            text = DecimalPoint().Replace(text, m => $"{m.Groups[1]} point {string.Join<char>(' ', m.Groups[3].Value)}"); // Convert decimal points like "3.1415" to "3 point 1 4 1 5".
             text = WebUrl().Replace(text, m => m.Value.Replace(".", " dot "));
         }
         text = text.Replace("\r\n", "\n");
@@ -119,7 +121,7 @@ public static partial class Tokenizer {
             .Replace("\n#", "\n Header: ");
         text = text.Replace(".com", "dot com").Replace("https://", "https ");
         text = text.Replace("\r\n", "\n").Replace("**", "*").Replace("‘", "\"").Replace("’", "\"");
-        text = Money().Replace(text, FlipMoneyMatch);
+        foreach (var c in currencies.Keys) { text = text.Replace(c.ToString(), $" {currencies[c]} "); } // Convert currency symbols to words (e.g., $ -> "dollar").
         text = Doctor().Replace(text, "Doctor");
         text = Mister().Replace(text, "Mister");
         text = Miss().Replace(text, "Miss");
@@ -136,13 +138,6 @@ public static partial class Tokenizer {
         for (int i = 0; i < 10; i++) { text = text.Replace("  ", " "); }
 
         return text.Trim();
-
-
-        // Helper methods
-        static string FlipMoneyMatch(Match m) {
-            var value = m.Value[1..].Replace(",", ".");
-            return $"{value} {currencies[m.Value[0]]}{(value == "1" ? "" : "s")}";
-        }
     }
 
     static string CollectSymbols(string text) {
@@ -200,18 +195,19 @@ public static partial class Tokenizer {
     [GeneratedRegex(@"\b(https?://)?(www\.)?[a-zA-Z0-9]+\b|\b[a-zA-Z0-9]+\.(com|net|org|io|edu|gov|mil|info|biz|co|us|uk|ca|de|fr|jp|au|cn|ru|gr)\b")]
                                                                      private static partial Regex WebUrl();
     [GeneratedRegex(@"^```[A-Za-z]{0,10}\n([\s\S]*?)\n```(?:\n|$)", RegexOptions.Multiline)]
-                                                                     private static partial Regex CodeBlock();
-    [GeneratedRegex(@"\[(.*?)\]\(.*?\)")]                            private static partial Regex HeaderLink();
-    [GeneratedRegex(@"\[.*?\[(.*?)\].*?\]\(.*?\)|\[(.*?)\]\(.*?\)")] private static partial Regex HeaderImgLink();
-    [GeneratedRegex(@"(\d)(\.)(\d)")]                                private static partial Regex DecimalPoint();
-    [GeneratedRegex(@"(?<!`)`([^`]+)`(?!`)")]                        private static partial Regex TickQuote();
-    [GeneratedRegex(@"\b(\d+(?:\.\d+)?)(KB|MB|GB|TB)(\s)")]          private static partial Regex ByteNumber();
-    [GeneratedRegex(@"[$€£¥₹₽₩₺₫]\d+(?:\.\d+)?")]                    private static partial Regex Money();
-    [GeneratedRegex(@"\bD[Rr]\.(?= [A-Z])")]                         private static partial Regex Doctor();
-    [GeneratedRegex(@"\b(Mr|MR)\.(?= [A-Z])")]                       private static partial Regex Mister();
-    [GeneratedRegex(@"\b(Ms|MS)\.(?= [A-Z])")]                       private static partial Regex Miss();
-    [GeneratedRegex(@"\x20{2,}")]                                    private static partial Regex WhiteSpace();
-    [GeneratedRegex(@"(?<!\:)\b([1-9]|1[0-2]):([0-5]\d)\b(?!\:)")]   private static partial Regex Time();
+                                                                     private static partial Regex CodeBlock();     // Markdown code blocks: ```csharp\ncode\n```
+    [GeneratedRegex(@"\[(.*?)\]\(.*?\)")]                            private static partial Regex HeaderLink();    // Markdown links: [Header](link)
+    [GeneratedRegex(@"\[.*?\[(.*?)\].*?\]\(.*?\)|\[(.*?)\]\(.*?\)")] private static partial Regex HeaderImgLink(); // Markdown image links: [Header[(img](link)]
+    [GeneratedRegex(@"(\d)(\.)(\d+)")]                               private static partial Regex DecimalPoint();  // Decimal point: 3.1415
+    [GeneratedRegex(@"(?<!`)`([^`]+)`(?!`)")]                        private static partial Regex TickQuote();     // Inline code: `code`
+    [GeneratedRegex(@"\b(\d+(?:\.\d+)?)(KB|MB|GB|TB)(\s)")]          private static partial Regex ByteNumber();    // Byte numbers: 1KB, 2.5MB, etc.
+    [GeneratedRegex(@"([$€£¥₹₽₩₺₫]) ?(\d+)(?:[\.,](\d+))?")]         private static partial Regex Money();         // Money amounts: $1, €2.50, etc.
+    [GeneratedRegex(@"(\d+)(?:[\.,](\d+))? ?([$€£¥₹₽₩₺₫])")]         private static partial Regex Money2();        // Money amounts: 1€, 2,50€, etc.
+    [GeneratedRegex(@"\bD[Rr]\.(?= [A-Z])")]                         private static partial Regex Doctor();        // Doctor: Dr. Smith
+    [GeneratedRegex(@"\b(Mr|MR)\.(?= [A-Z])")]                       private static partial Regex Mister();        // Mister: Mr. Smith
+    [GeneratedRegex(@"\b(Ms|MS)\.(?= [A-Z])")]                       private static partial Regex Miss();          // Miss: Ms. Smith
+    [GeneratedRegex(@"\x20{2,}")]                                    private static partial Regex WhiteSpace();    // Multiple spaces: "  "
+    [GeneratedRegex(@"(?<!\:)\b([1-9]|1[0-2]):([0-5]\d)\b(?!\:)")]   private static partial Regex Time();          // Time: 12:30, 9:45, etc.
 
     #endregion Regexes
 }
