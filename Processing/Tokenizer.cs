@@ -85,7 +85,7 @@ public static partial class Tokenizer {
         text = HeaderLink().Replace(text, "$1"); // Discard links appearing in `[Header](link)` format.
         text = HeaderImgLink().Replace(text, "$1$2"); // And in [Header[(img](link)]
         for (int i = 0; i < 5; i++) {
-            text = DecimalPoint().Replace(text, "$1 point $2");
+            text = DecimalPoint().Replace(text, "$1 point $3");
             text = WebUrl().Replace(text, m => m.Value.Replace(".", " dot "));
         }
         text = text.Replace("\r\n", "\n");
