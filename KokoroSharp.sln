@@ -5,6 +5,18 @@ VisualStudioVersion = 17.12.35506.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KokoroSharp", "KokoroSharp\KokoroSharp.csproj", "{81F1B2B4-923A-4AD5-BAC9-72EA1620E162}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Runtimes", "Runtimes", "{BB4FD3E1-BF37-801A-7591-DC4DC6E3BB2D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KokoroSharp.CPU", "Runtimes\KokoroSharp.CPU\KokoroSharp.CPU.csproj", "{4AE4E0AE-38FE-431D-8619-303453DA0039}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KokoroSharp.DirectML", "Runtimes\KokoroSharp.DirectML\KokoroSharp.DirectML.csproj", "{5890CDBC-C7A4-4CC6-8C76-10D1ECBB4096}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KokoroSharp.GPU", "Runtimes\KokoroSharp.GPU\KokoroSharp.GPU.csproj", "{F4023735-61D3-44F7-836D-80183DB51CE8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KokoroSharp.GPU.Linux", "Runtimes\KokoroSharp.GPU.Linux\KokoroSharp.GPU.Linux.csproj", "{D2ED80BE-4A05-49FA-AC4E-36B9793A0A6C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KokoroSharp.GPU.Windows", "Runtimes\KokoroSharp.GPU.Windows\KokoroSharp.GPU.Windows.csproj", "{6A9ADF19-7706-4FA1-A126-5BB17FA22BE5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,9 +27,36 @@ Global
 		{81F1B2B4-923A-4AD5-BAC9-72EA1620E162}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{81F1B2B4-923A-4AD5-BAC9-72EA1620E162}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{81F1B2B4-923A-4AD5-BAC9-72EA1620E162}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4AE4E0AE-38FE-431D-8619-303453DA0039}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4AE4E0AE-38FE-431D-8619-303453DA0039}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4AE4E0AE-38FE-431D-8619-303453DA0039}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4AE4E0AE-38FE-431D-8619-303453DA0039}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5890CDBC-C7A4-4CC6-8C76-10D1ECBB4096}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5890CDBC-C7A4-4CC6-8C76-10D1ECBB4096}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5890CDBC-C7A4-4CC6-8C76-10D1ECBB4096}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5890CDBC-C7A4-4CC6-8C76-10D1ECBB4096}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4023735-61D3-44F7-836D-80183DB51CE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4023735-61D3-44F7-836D-80183DB51CE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4023735-61D3-44F7-836D-80183DB51CE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4023735-61D3-44F7-836D-80183DB51CE8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2ED80BE-4A05-49FA-AC4E-36B9793A0A6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2ED80BE-4A05-49FA-AC4E-36B9793A0A6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2ED80BE-4A05-49FA-AC4E-36B9793A0A6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2ED80BE-4A05-49FA-AC4E-36B9793A0A6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A9ADF19-7706-4FA1-A126-5BB17FA22BE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A9ADF19-7706-4FA1-A126-5BB17FA22BE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A9ADF19-7706-4FA1-A126-5BB17FA22BE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A9ADF19-7706-4FA1-A126-5BB17FA22BE5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4AE4E0AE-38FE-431D-8619-303453DA0039} = {BB4FD3E1-BF37-801A-7591-DC4DC6E3BB2D}
+		{5890CDBC-C7A4-4CC6-8C76-10D1ECBB4096} = {BB4FD3E1-BF37-801A-7591-DC4DC6E3BB2D}
+		{F4023735-61D3-44F7-836D-80183DB51CE8} = {BB4FD3E1-BF37-801A-7591-DC4DC6E3BB2D}
+		{D2ED80BE-4A05-49FA-AC4E-36B9793A0A6C} = {BB4FD3E1-BF37-801A-7591-DC4DC6E3BB2D}
+		{6A9ADF19-7706-4FA1-A126-5BB17FA22BE5} = {BB4FD3E1-BF37-801A-7591-DC4DC6E3BB2D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3C1DA42D-8557-479D-9B1D-528F74DB9F49}
