@@ -5,6 +5,8 @@ VisualStudioVersion = 17.12.35506.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KokoroSharp", "KokoroSharp.csproj", "{81F1B2B4-923A-4AD5-BAC9-72EA1620E162}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KokoroSharp.Tests", "Tests\KokoroSharp.Tests.csproj", "{6BF18B81-C7FC-017A-ACBF-C2A0ECC237F8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{81F1B2B4-923A-4AD5-BAC9-72EA1620E162}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{81F1B2B4-923A-4AD5-BAC9-72EA1620E162}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{81F1B2B4-923A-4AD5-BAC9-72EA1620E162}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6BF18B81-C7FC-017A-ACBF-C2A0ECC237F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6BF18B81-C7FC-017A-ACBF-C2A0ECC237F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6BF18B81-C7FC-017A-ACBF-C2A0ECC237F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6BF18B81-C7FC-017A-ACBF-C2A0ECC237F8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
