@@ -1,8 +1,6 @@
 <Project>
     <PropertyGroup>
         <NoWarn>$(NoWarn);NU5128;NU5100</NoWarn>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-        <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute> 
     </PropertyGroup>
 
     <PropertyGroup>

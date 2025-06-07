@@ -26,12 +26,7 @@
     <ItemGroup>
         <Content Include="voices/**" PackagePath="content/voices" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="espeak/**" PackagePath="content/espeak" CopyToOutputDirectory="PreserveNewest" />
-        <None Include="README.md" Pack="true" PackagePath="\" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Remove="Tests\**" />
-        <None Remove="Runtimes\**" />
+        <None Include="../README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 
     <ItemGroup>
