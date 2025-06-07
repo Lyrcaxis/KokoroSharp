@@ -21,13 +21,13 @@ jobs:
                   mkdir -p release-assets
                   curl -L -o release-assets/voices.zip https://github.com/Lyrcaxis/KokoroSharpBinaries/releases/download/v1.0.0/voices.zip
                   curl -L -o release-assets/espeak.zip https://github.com/Lyrcaxis/KokoroSharpBinaries/releases/download/v1.0.0/espeak-ng-binaries-v1.52.zip
-                  unzip release-assets/voices.zip -d .
-                  unzip release-assets/espeak.zip -d .
+                  unzip release-assets/voices.zip -d KokoroSharp
+                  unzip release-assets/espeak.zip -d KokoroSharp
 
             - name: Pack and build projects
               run: |
                 PROJECTS=(
-                    "KokoroSharp.csproj"
+                    "./KokoroSharp/KokoroSharp.csproj"
                     "./Runtimes/KokoroSharp.CPU.csproj"
                     "./Runtimes/KokoroSharp.GPU.csproj"
                     "./Runtimes/KokoroSharp.GPU.Linux.csproj"
