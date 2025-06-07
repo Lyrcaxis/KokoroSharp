@@ -27,15 +27,14 @@ jobs:
             - name: Pack and build projects
               run: |
                 PROJECTS=(
-                    "./KokoroSharp/KokoroSharp.csproj"
-                    "./Runtimes/KokoroSharp.CPU.csproj"
-                    "./Runtimes/KokoroSharp.GPU.csproj"
-                    "./Runtimes/KokoroSharp.GPU.Linux.csproj"
-                    "./Runtimes/KokoroSharp.GPU.Windows.csproj"
-                    "./Runtimes/KokoroSharp.DirectML.csproj"
+                    "./Runtimes/KokoroSharp.CPU/KokoroSharp.CPU.csproj"
+                    "./Runtimes/KokoroSharp.GPU/KokoroSharp.GPU.csproj"
+                    "./Runtimes/KokoroSharp.GPU.Linux/KokoroSharp.GPU.Linux.csproj"
+                    "./Runtimes/KokoroSharp.GPU.Windows/KokoroSharp.GPU.Windows.csproj"
+                    "./Runtimes/KokoroSharp.DirectML/KokoroSharp.DirectML.csproj"
                 )
-                for project_path in "${PROJECTS[@]:1}"; do dotnet sln KokoroSharp.sln add "$project_path"; done # Add all projects to the solution
-                for project_path in "${PROJECTS[@]}"; do dotnet pack "$project_path" -c Release -o ./packed_nupkgs; done # Pack all projects into nupkgs
+                for project_path in "${PROJECTS[@]}"; do dotnet sln KokoroSharp.sln add "$project_path"; done # Add all projects to the solution
+                dotnet pack KokoroSharp.sln -c Release -o ./packed_nupkgs # Pack all projects into nupkgs
             
             - name: Publish to NuGet
               run: dotnet nuget push ./packed_nupkgs/*.nupkg -k ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
