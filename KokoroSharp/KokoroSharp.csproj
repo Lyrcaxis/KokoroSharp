@@ -32,4 +32,9 @@
     <ItemGroup>
         <None Include="KokoroSharp.targets" Pack="true" PackagePath="buildTransitive/" />
     </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="KokoroSharp.Tests" />
+    </ItemGroup>
+
 </Project>
