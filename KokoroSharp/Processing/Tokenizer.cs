@@ -81,7 +81,7 @@ public static partial class Tokenizer {
 
     /// <summary> Normalizes the input text to what the Kokoro model would expect to see, preparing it for phonemization. </summary>
     /// <remarks> In addition, converts various "written" text to "spoken" form (e.g. $1 --> "one dollar" instead of "dollar one". </remarks>
-    internal static string PreprocessText(string text, string langCode) {
+    internal static string PreprocessText(string text, string langCode = "en-us") {
         text = HeaderLink().Replace(text, "$1"); // Discard links appearing in `[Header](link)` format.
         text = HeaderImgLink().Replace(text, "$1$2"); // And in [Header[(img](link)]
         text = Money().Replace(text, "$2 $1 $3"); // Convert money amounts like "$1.50" to "1 $ 50".
