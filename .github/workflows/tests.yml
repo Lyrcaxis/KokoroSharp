@@ -14,5 +14,14 @@ jobs:
             - uses: actions/setup-dotnet@v4
               with:
                   dotnet-version: 8.0.x
+
+            - name: Download Release Assets
+              run: |
+                  mkdir -p release-assets
+                  curl -L -o release-assets/voices.zip https://github.com/Lyrcaxis/KokoroSharpBinaries/releases/download/v1.0.0/voices.zip
+                  curl -L -o release-assets/espeak.zip https://github.com/Lyrcaxis/KokoroSharpBinaries/releases/download/v1.0.0/espeak-ng-binaries-v1.52.zip
+                  unzip release-assets/voices.zip -d KokoroSharp
+                  unzip release-assets/espeak.zip -d KokoroSharp
+
             - name: Test
               run: dotnet test -c Release
