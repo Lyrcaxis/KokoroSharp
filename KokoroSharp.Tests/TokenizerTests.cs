@@ -14,4 +14,11 @@ public class TokenizerTests {
     public async Task PreprocessText(string input, string expected) {
         await Assert.That(Tokenizer.PreprocessText(input)).IsEqualTo(expected);
     }
+
+    [Test]
+    [Arguments("[Misaki](/misˈɑki/) is a G2P engine designed for [Kokoro](/kˈOkəɹO/) models.", "misˈɑki ɪz ɐ dʒˈi tˈu pˈi ˈɛndʒɪn dɪzˈaɪnd fˌɔɹ kˈOkəɹO mˈɑːdəlz")]
+    [Arguments("Brits say [tomato](/təmɑːtoʊ/) instead of [tomato](/təmeɪtoʊ/).", "bɹˈɪts sˈeɪ təmɑːtoʊ ɪnstˈɛd ʌv təmeɪtoʊ")]
+    public async Task Phonemize(string input, string expected) {
+        await Assert.That(Tokenizer.Phonemize(input)).IsEqualTo(expected);
+    }
 }
