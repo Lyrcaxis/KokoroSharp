@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BenchmarkDotNet" Version="0.15.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\KokoroSharp\KokoroSharp.csproj" />
+    </ItemGroup>
+
+</Project>
