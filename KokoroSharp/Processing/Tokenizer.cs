@@ -62,16 +62,21 @@ public static partial class Tokenizer {
             StartInfo = new ProcessStartInfo() {
                 FileName = CrossPlatformHelper.GetEspeakBinariesPath(),
                 WorkingDirectory = null,
-                Arguments = $"--ipa=3 -q -v {langCode} \"{text}\"",
-                RedirectStandardInput = false,
+                Arguments = $"--ipa=3 -b 1 -q -v {langCode} --stdin",
+                RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 CreateNoWindow = true,
                 UseShellExecute = false,
+                StandardInputEncoding = Encoding.UTF8,
                 StandardOutputEncoding = Encoding.UTF8
             }
         };
         process.StartInfo.EnvironmentVariables.Add("ESPEAK_DATA_PATH", @$"{eSpeakNGPath}/espeak-ng-data");
         process.Start();
+        Task.Run(async () => {
+            await process.StandardInput.WriteLineAsync(text);
+            process.StandardInput.Close();
+        });
         originalSegments = process.StandardOutput.ReadToEnd();
         Debug.WriteLine($"org:\n{originalSegments}---");
         process.StandardOutput.Close();
