@@ -29,7 +29,7 @@ tts.SpeakFast("Hello from GPU!", KokoroVoiceManager.GetVoice("af_heart"));
 
 For NVIDIA GPUs with CUDA support:
 - Choose either [KokoroSharp.GPU.Windows](https://www.nuget.org/packages/KokoroSharp.GPU.Windows), [KokoroSharp.GPU.Linux](https://www.nuget.org/packages/KokoroSharp.GPU.Linux), or [KokoroSharp.GPU](https://www.nuget.org/packages/KokoroSharp.GPU).
-- Download & install [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit), and make sure it's in SYSTEM PATH.
+- Download & install [CUDA Toolkit (v12.x)](https://developer.nvidia.com/cuda-12-4-0-download-archive), and make sure it's in SYSTEM PATH or put the libraries next to your compiled executable.
 - Download & install [cuDNN](https://developer.nvidia.com/cudnn), and make sure it's in SYSTEM PATH.
 - Restart your IDE/terminal after installation, then, run:
 ```cs
@@ -65,3 +65,16 @@ It's also possible to receive this error if you have more packages than you shou
 `DllNotFoundException` means you have no runtime AT ALL. For plug & play support (still fast), use the [KokoroSharp.CPU](https://www.nuget.org/packages/KokoroSharp.CPU) package.
 
 Always reset your IDE/terminal after installing dependencies, to make sure the system path is in sync.
+
+### Exact list of CUDA / CUDNN libraries nessesary for inference
+- cudnn_engines_runtime_compiled64_9.dll
+- cudnn_engines_precompiled64_9.dll
+- cudnn_heuristic64_9.dll
+- cudnn_graph64_9.dll
+- cublasLt64_12.dll
+- cudnn_adv64_9.dll
+- cudnn_ops64_9.dll
+- cublas64_12.dll
+- cudart64_12.dll
+- cufft64_11.dll
+- cudnn64_9.dll
