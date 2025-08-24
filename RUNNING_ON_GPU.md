@@ -66,15 +66,20 @@ It's also possible to receive this error if you have more packages than you shou
 
 Always reset your IDE/terminal after installing dependencies, to make sure the system path is in sync.
 
+
+
 ### Exact list of CUDA / CUDNN libraries nessesary for inference
-- cudnn_engines_runtime_compiled64_9.dll
-- cudnn_engines_precompiled64_9.dll
-- cudnn_heuristic64_9.dll
-- cudnn_graph64_9.dll
-- cublasLt64_12.dll
-- cudnn_adv64_9.dll
-- cudnn_ops64_9.dll
-- cublas64_12.dll
-- cudart64_12.dll
-- cufft64_11.dll
-- cudnn64_9.dll
+<details>
+  <summary>(Preview)</summary>
+  - cudnn_engines_runtime_compiled64_9.dll <br>
+  - cudnn_engines_precompiled64_9.dll <br>
+  - cudnn_heuristic64_9.dll <br>
+  - cudnn_graph64_9.dll <br>
+  - cublasLt64_12.dll <br>
+  - cudnn_adv64_9.dll <br>
+  - cudnn_ops64_9.dll <br>
+  - cublas64_12.dll <br>
+  - cudart64_12.dll <br>
+  - cufft64_11.dll <br>
+  - cudnn64_9.dll <br>
+</details>
