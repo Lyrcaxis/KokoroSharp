@@ -34,7 +34,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="KokoroSharp.Tests" />
+        <InternalsVisibleTo Include="KokoroSharp.Tests;Benchmark" />
     </ItemGroup>
 
 </Project>
