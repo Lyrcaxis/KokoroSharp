@@ -1,5 +1,7 @@
 ﻿namespace KokoroSharp.Processing;
 
+using Kokoro.Misaki;
+
 using KokoroSharp.Utilities;
 
 using System.Diagnostics;
@@ -18,10 +20,6 @@ public static partial class Tokenizer {
     static Dictionary<char, string> currencies = new() { { '$', "dollar" }, { '€', "euro" }, { '£', "pound" }, { '¥', "yen" }, { '₹', "rupee" }, { '₽', "ruble" }, { '₩', "won" }, { '₺', "lira" }, { '₫', "dong" } };
     static char[] deletableCharacters = [.. "-`()[]{}"];
     //static int[] z ; // tokens that might be of interest later.
-
-    /// <summary> Path to the folder in which the espeak-ng binaries and data reside. Defaults to the folder created by the NuGet package. </summary>
-    /// <remarks> Can be overridden with a custom path if a use-case requires so. </remarks>
-    public static string eSpeakNGPath { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "espeak");
 
     public static IReadOnlyDictionary<char, int> Vocab { get; }
     public static IReadOnlyDictionary<int, char> TokenToChar { get; }
@@ -48,6 +46,9 @@ public static partial class Tokenizer {
     public static int[] Tokenize(string inputText, string langCode = "en-us", bool preprocess = true) => Phonemize(inputText, langCode, preprocess).Select(x => Vocab[x]).ToArray();
 
 
+    static MisakiEnglishG2P g2p;
+    public static async Task InitializeAsync() => await (g2p = new()).InitializeAsync(LanguageCode.En_US, default);
+
     /// <summary> Converts the input text into the corresponding phonemes, with slight preprocessing and post-processing to preserve punctuation and other TTS essentials. </summary>
     public static string Phonemize(string inputText, string langCode = "en-us", bool preprocess = true) {
         var strings = PhonemeLiteral().Split(inputText).Select(text => {
@@ -55,41 +56,12 @@ public static partial class Tokenizer {
             if (m.Success) { return m.Groups[1].Value; } // Extract the phoneme part from the literal pronunciation, e.g. [Kokoro](/kˈOkəɹO/) => "kˈOkəɹO"
             if (preprocess) { text = PreprocessText(text, langCode); } // Preprocess the text if needed.
             if (string.IsNullOrWhiteSpace(text)) { return string.Empty; } // Skip empty strings.
-            return Phonemize_Internal(CollectSymbols(text), out _, langCode); // Collect symbols to prepare for phonemization.
+            return g2p.ConvertToPhonemes(CollectSymbols(text)); // Collect symbols to prepare for phonemization.
         });
         string preprocessedText = string.Join(' ', strings);
-        var phonemeList = preprocessedText.Split('\n');
-        return PostProcessPhonemes(preprocessedText, phonemeList, langCode);
+        return PostProcessPhonemes(inputText, string.Join(' ', strings).Split(' '), langCode);
     }
 
-    /// <summary> Invokes the platform-appropriate espeak-ng executable via command line, to convert given text into phonemes. </summary>
-    /// <remarks> eSpeak NG will return a line ending when it meets any of the <see cref="PunctuationTokens"/> and gets rid of any punctuation, so these will have to be converted back to a single-line, with the punctuation restored. </remarks>
-    public static string Phonemize_Internal(string text, out string originalSegments, string langCode = "en-us") {
-        using var process = new Process() {
-            StartInfo = new ProcessStartInfo() {
-                FileName = CrossPlatformHelper.GetEspeakBinariesPath(),
-                WorkingDirectory = null,
-                Arguments = $"--ipa=3 -b 1 -q -v {langCode} --stdin",
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                StandardInputEncoding = Encoding.UTF8,
-                StandardOutputEncoding = Encoding.UTF8
-            }
-        };
-        process.StartInfo.EnvironmentVariables.Add("ESPEAK_DATA_PATH", @$"{eSpeakNGPath}/espeak-ng-data");
-        process.Start();
-        Task.Run(async () => {
-            await process.StandardInput.WriteLineAsync(text);
-            process.StandardInput.Close();
-        });
-        originalSegments = process.StandardOutput.ReadToEnd();
-        Debug.WriteLine($"org:\n{originalSegments}---");
-        process.StandardOutput.Close();
-
-        return originalSegments.Replace("\r\n", "\n").Trim();
-    }
 
     /// <summary> Normalizes the input text to what the Kokoro model would expect to see, preparing it for phonemization. </summary>
     /// <remarks> In addition, converts various "written" text to "spoken" form (e.g. $1 --> "one dollar" instead of "dollar one". </remarks>
@@ -176,11 +148,12 @@ public static partial class Tokenizer {
 
         // Restoration of punctuation and spacing.
         var sb = new StringBuilder();
+        int rIndex = 0;
         for (int i = 0; i < phonemesArray.Length; i++) {
             var vf = phonemesArray[i];
             if (vf.StartsWith("ˈɛ")) { vf = "ˌɛ" + vf[2..]; }
-            sb.Append(vf);
-            if (puncs.Count > i) { sb.Append(puncs[i]); }
+            if (vf.Contains(',') && rIndex < puncs.Count) { vf = vf.Replace(",", puncs[rIndex++]);}
+            sb.Append(vf + ' ');
         }
         var phonemes = sb.ToString().Trim();
 
@@ -198,7 +171,9 @@ public static partial class Tokenizer {
                 i++;
             }
         }
-        phonemes = phonemes.Replace("ː ", " ").Replace("ɔː", "ˌɔ").Replace("\n ", "\n");
+        phonemes = phonemes.Replace("ː ", " ").Replace("ɔː", "ˌɔ").Replace("\n ", "\n").Replace("❓", "");
+        for (int i = 0; i < 5; i++) { phonemes = phonemes.Replace(" ,", ", ").Replace("  ", " "); }
+
         return new string(phonemes.Where(Vocab.ContainsKey).ToArray());
     }
 

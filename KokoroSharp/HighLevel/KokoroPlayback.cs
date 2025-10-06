@@ -43,7 +43,7 @@ public sealed class KokoroPlayback : IDisposable {
                     stream.Dispose();
                 }
             }
-        }) { IsBackground = true }.Start();
+        }).Start();
     }
 
     /// <summary> Enqueues specified audio samples for playback. They will be played once all previously queued samples have been played. </summary>
@@ -86,9 +86,9 @@ public sealed class KokoroPlayback : IDisposable {
     /// <remarks> Returns a new array with the processed audio samples. Note that the returned array will likely be smaller in size. </remarks>
     public static float[] PostProcessSamples(float[] samples) {
         var (start, end) = (0, samples.Length - 1);
-        while (start < samples.Length && Math.Abs(samples[start]) <= 0.01f) { start++; }
-        while (end > start && Math.Abs(samples[end]) <= 0.005f) { end--; }
-        for (int i = 0; i < samples.Length; i++) { if (Math.Abs(samples[i]) < 0.001f) { samples[i] = 0; } }
+        while (start < samples.Length && Math.Abs(samples[start]) <= 0.005f) { start++; }
+        while (end > start && Math.Abs(samples[end]) <= 0.0001f) { end--; }
+        for (int i = 0; i < samples.Length; i++) { if (Math.Abs(samples[i]) < 0.00005f) { samples[i] = 0; } }
 
         float[] trimmedSamples = new float[end - start + 1];
         Array.Copy(samples, start, trimmedSamples, 0, trimmedSamples.Length);
