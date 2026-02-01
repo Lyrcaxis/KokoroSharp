@@ -103,7 +103,7 @@ public sealed partial class KokoroTTS : KokoroEngine {
         handle.OnInferenceStepCompleted?.Invoke(step, playbackHandle); // Notify end users that the step is complete, and pass the handle.
 
         // Finally, if the segment is gracefully ended with a punctuation token, add some pause to it, to emulate natural pause.
-        bool shouldAddPause = NicifyAudio && pipelineConfig != null && Tokenizer.PunctuationTokens.Contains(step.Tokens[^1]);
+        bool shouldAddPause = NicifyAudio && pipelineConfig != null && step.Tokens.Any() && Tokenizer.PunctuationTokens.Contains(step.Tokens[^1]);
         if (shouldAddPause) {
             var secondsToWait = pipelineConfig.SecondsOfPauseBetweenProperSegments[Tokenizer.TokenToChar[step.Tokens[^1]]];
             var pauseHandle = playbackInstance.Enqueue(new float[(int) (secondsToWait * KokoroPlayback.waveFormat.SampleRate)], null, null, null);
