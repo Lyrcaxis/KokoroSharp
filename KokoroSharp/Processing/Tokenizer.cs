@@ -127,12 +127,12 @@ public static partial class Tokenizer {
             return $"{m.Groups[1].Value}{u}{m.Groups[3].Value}";
         });
         text = text.Replace("/", " slash ")
-            .Replace("\n######", "\n Subnote: ")
-            .Replace("\n#####", "\n Minor note: ")
-            .Replace("\n####", "\n Note: ")
-            .Replace("\n###", "\n Minor Header: ")
-            .Replace("\n##", "\n Subheader: ")
-            .Replace("\n#", "\n Header: ");
+            .Replace("\n###### ", "\n Subnote: ")
+            .Replace("\n##### ", "\n Minor note: ")
+            .Replace("\n#### ", "\n Note: ")
+            .Replace("\n### ", "\n Minor Header: ")
+            .Replace("\n## ", "\n Subheader: ")
+            .Replace("\n# ", "\n Header: ");
         text = text.Replace(".com", "dot com").Replace("https://", "https ");
         text = text.Replace("\r\n", "\n").Replace("**", "*").Replace("‘", "\"").Replace("’", "\"");
         foreach (var c in currencies.Keys) { text = text.Replace(c.ToString(), $" {currencies[c]} "); } // Convert currency symbols to words (e.g., $ -> "dollar").
