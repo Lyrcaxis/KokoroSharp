@@ -1,4 +1,4 @@
-﻿namespace KokoroSharp.Processing;
+namespace KokoroSharp.Processing;
 
 using KokoroSharp.Utilities;
 
@@ -50,15 +50,17 @@ public static partial class Tokenizer {
 
     /// <summary> Converts the input text into the corresponding phonemes, with slight preprocessing and post-processing to preserve punctuation and other TTS essentials. </summary>
     public static string Phonemize(string inputText, string langCode = "en-us", bool preprocess = true) {
-        var strings = PhonemeLiteral().Split(inputText).Select(text => {
+        var parts = PhonemeLiteral().Split(inputText).Select(text => {
             var m = PhonemeLiteral2().Match(text);
-            if (m.Success) { return m.Groups[1].Value; } // Extract the phoneme part from the literal pronunciation, e.g. [Kokoro](/kˈOkəɹO/) => "kˈOkəɹO"
+            if (m.Success) { var p = m.Groups[1].Value; return (p, p); }
             if (preprocess) { text = PreprocessText(text, langCode); } // Preprocess the text if needed.
-            if (string.IsNullOrWhiteSpace(text)) { return string.Empty; } // Skip empty strings.
-            return Phonemize_Internal(CollectSymbols(text), out _, langCode); // Collect symbols to prepare for phonemization.
-        });
-        string preprocessedText = string.Join(' ', strings);
-        var phonemeList = preprocessedText.Split('\n');
+            if (string.IsNullOrWhiteSpace(text)) { return (text, string.Empty); } // Skip empty strings.
+            return (text, Phonemize_Internal(CollectSymbols(text), out _, langCode)); // Collect symbols to prepare for phonemization.
+        }).ToList();
+
+        // Preprocessed text retains punctuation for PostProcessPhonemes to restore.
+        string preprocessedText = string.Join("", parts.Select(x => x.Item1));
+        var phonemeList = string.Join(' ', parts.Select(x => x.Item2)).Split('\n');
         return PostProcessPhonemes(preprocessedText, phonemeList, langCode);
     }
 

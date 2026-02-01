@@ -86,9 +86,9 @@ public sealed class KokoroPlayback : IDisposable {
     /// <remarks> Returns a new array with the processed audio samples. Note that the returned array will likely be smaller in size. </remarks>
     public static float[] PostProcessSamples(float[] samples) {
         var (start, end) = (0, samples.Length - 1);
-        while (start < samples.Length && Math.Abs(samples[start]) <= 0.01f) { start++; }
-        while (end > start && Math.Abs(samples[end]) <= 0.005f) { end--; }
-        for (int i = 0; i < samples.Length; i++) { if (Math.Abs(samples[i]) < 0.001f) { samples[i] = 0; } }
+        while (start < samples.Length && Math.Abs(samples[start]) <= 0.0001f) { start++; }
+        while (end > start && Math.Abs(samples[end]) <= 0.0001f) { end--; }
+        for (int i = 0; i < samples.Length; i++) { if (Math.Abs(samples[i]) < 0.00001f) { samples[i] = 0; } }
 
         float[] trimmedSamples = new float[end - start + 1];
         Array.Copy(samples, start, trimmedSamples, 0, trimmedSamples.Length);
