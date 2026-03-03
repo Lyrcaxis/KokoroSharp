@@ -11,6 +11,8 @@ using System.Diagnostics;
 public abstract class KokoroWaveOutEvent {
     public RawSourceWaveStream stream { get; private set; }
 
+    public float Volume { get; protected set; } = 1;
+
     /// <summary> The state of the playback (Playing/Stopped). </summary>
     public abstract PlaybackState PlaybackState { get; }
 
@@ -42,8 +44,8 @@ public class WindowsAudioPlayer : KokoroWaveOutEvent {
     readonly WaveOutEvent waveOut = new();
     public override PlaybackState PlaybackState => waveOut.PlaybackState;
     public override void Dispose() => waveOut.Dispose();
-    public override void Play() { waveOut.Init(stream); waveOut.Play(); }
-    public override void SetVolume(float volume) => waveOut.Volume = volume;
+    public override void Play() { waveOut.Init(stream); waveOut.Volume = Volume; waveOut.Play(); }
+    public override void SetVolume(float volume) => waveOut.Volume = Volume = volume;
     public override void Stop() => waveOut.Stop();
 }
 
@@ -78,6 +80,7 @@ public class LinuxAudioPlayer : KokoroWaveOutEvent {
             FillALBuffer(buffers[i], data);
         }
         AL.SourceQueueBuffers(source, buffers);
+        SetVolume(Volume); // restore prev value
         AL.SourcePlay(source);
         state = PlaybackState.Playing;
 
@@ -114,7 +117,7 @@ public class LinuxAudioPlayer : KokoroWaveOutEvent {
     }
 
     public override void Stop() => Dispose();
-    public override void SetVolume(float volume) => AL.Source(source, ALSourcef.Gain, Math.Clamp(volume, 0, 1f)); // Technically supports > 1 volume but not sure if it's a good idea.
+    public override void SetVolume(float volume) => AL.Source(source, ALSourcef.Gain, Volume = Math.Clamp(volume, 0, 1f)); // Technically supports > 1 volume but not sure if it's a good idea.
     public override void Dispose() {
         AL.SourceStop(source);
         state = PlaybackState.Stopped;
