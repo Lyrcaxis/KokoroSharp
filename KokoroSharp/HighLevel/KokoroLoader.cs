@@ -8,7 +8,7 @@ using static KokoroSharp.KModel;
 public enum KModel { float32, float16, int8 }
 
 public partial class KokoroTTS {
-    static IReadOnlyDictionary<KModel, string> ModelNamesMap { get; } = new Dictionary<KModel, string>() {
+    internal static IReadOnlyDictionary<KModel, string> ModelNamesMap { get; } = new Dictionary<KModel, string>() {
         { float32, "kokoro.onnx" },
         { float16, "kokoro-quant.onnx" },
         { int8,    "kokoro-quant-convinteger.onnx" },
