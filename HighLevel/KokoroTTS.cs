@@ -86,6 +86,9 @@ public sealed partial class KokoroTTS : KokoroEngine {
         currentHandle.ReadyPlaybackHandles.ForEach(x => x.Abort());
     }
 
+    /// <summary> Adjust the volume of the playback. [0.0, to 1.0] </summary>
+    public void SetVolume(float volume) => playbackInstance.SetVolume(volume);
+
     /// <inheritdoc/>
     public override void Dispose() {
         StopPlayback();

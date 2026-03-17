@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>Library</OutputType>
@@ -26,15 +26,16 @@
     <ItemGroup>
         <Content Include="voices/**" PackagePath="content/voices" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="espeak/**" PackagePath="content/espeak" CopyToOutputDirectory="PreserveNewest" />
-        <None Include="../README.md" Pack="true" PackagePath="\" />
+        <None Include="README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="Tests\**" />
+        <None Remove="Runtimes\**" />
     </ItemGroup>
 
     <ItemGroup>
         <None Include="KokoroSharp.targets" Pack="true" PackagePath="buildTransitive/" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <InternalsVisibleTo Include="KokoroSharp.Tests" />
     </ItemGroup>
 
 </Project>

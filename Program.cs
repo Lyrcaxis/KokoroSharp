@@ -19,7 +19,7 @@ internal class Program {
     static void Main(string[] _) {
         // You'll need to download the model first. You can find it in https://github.com/taylorchu/kokoro-onnx/releases/tag/v0.2.0.
         var v = new SessionOptions();
-        v.AppendExecutionProvider_CUDA();
+        //v.AppendExecutionProvider_CUDA();
         using KokoroTTS tts = KokoroTTS.LoadModel(sessionOptions: v); // The high level inference engine provided by KokoroSharp. We instantiate once, cache it, and reuse it.
         //KokoroVoiceManager.LoadVoicesFromPath("voices"); // The voices are pre-bundled with the package in "/voices", but can still be loaded manually from a different path if needed.
         KokoroVoice sarah = KokoroVoiceManager.GetVoice("af_sarah"); // Once the voices are loaded, they can be retrieved instantly from memory.
