@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <Version>0.6.6-preview2</Version>
+        <Version>0.6.6</Version>
         <Authors>Lyrcaxis</Authors>
         <RepositoryUrl>https://github.com/Lyrcaxis/KokoroSharp</RepositoryUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>

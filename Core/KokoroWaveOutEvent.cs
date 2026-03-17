@@ -1,6 +1,7 @@
 ﻿namespace KokoroSharp.Core;
 
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 using OpenTK.Audio.OpenAL;
 
@@ -42,10 +43,19 @@ public abstract class KokoroWaveOutEvent {
 // A wrapper for NAudio's WaveOutEvent.
 public class WindowsAudioPlayer : KokoroWaveOutEvent {
     readonly WaveOutEvent waveOut = new();
+    VolumeSampleProvider volumeProvider;
+
     public override PlaybackState PlaybackState => waveOut.PlaybackState;
     public override void Dispose() => waveOut.Dispose();
-    public override void Play() { waveOut.Init(stream); waveOut.Volume = Volume; waveOut.Play(); }
-    public override void SetVolume(float volume) => waveOut.Volume = Volume = volume;
+    public override void Play() {
+        volumeProvider = new(stream.ToSampleProvider()) { Volume = Volume };
+        waveOut.Init(volumeProvider);
+        waveOut.Play();
+    }
+    public override void SetVolume(float volume) {
+        Volume = volume;
+        if (volumeProvider != null) { volumeProvider.Volume = volume; }
+    }
     public override void Stop() => waveOut.Stop();
 }
 
