@@ -11,6 +11,7 @@ using System.Diagnostics;
 public sealed class KokoroModel : IDisposable {
     readonly InferenceSession session;
     readonly SessionOptions defaultOptions = new() { EnableMemoryPattern = true, InterOpNumThreads = 8, IntraOpNumThreads = 8 };
+    bool _isDisposed;
 
     public const int maxTokens = 510;
 
@@ -44,6 +45,7 @@ public sealed class KokoroModel : IDisposable {
 
         var inputs = new List<NamedOnnxValue> { GetOnnxValue("tokens", tokenTensor), GetOnnxValue("style", styleTensor), GetOnnxValue("speed", speedTensor) };
         lock (session) {
+            if (_isDisposed) { return []; }
             using var results = session.Run(inputs);
             return [.. results[0].AsTensor<float>()];
         }
@@ -51,6 +53,9 @@ public sealed class KokoroModel : IDisposable {
     }
 
     public void Dispose() {
-        lock (session) { session.Dispose(); }
+        lock (session) {
+            session.Dispose();
+            _isDisposed = true;
+        }
     }
 }
