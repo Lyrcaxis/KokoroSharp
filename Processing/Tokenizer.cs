@@ -80,7 +80,7 @@ public static partial class Tokenizer {
                 StandardOutputEncoding = Encoding.UTF8
             }
         };
-        process.StartInfo.EnvironmentVariables.Add("ESPEAK_DATA_PATH", @$"{eSpeakNGPath}/espeak-ng-data");
+        process.StartInfo.EnvironmentVariables["ESPEAK_DATA_PATH"] = @$"{eSpeakNGPath}/espeak-ng-data";
         process.Start();
         Task.Run(async () => {
             await process.StandardInput.WriteLineAsync(text);
