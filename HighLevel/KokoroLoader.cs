@@ -1,19 +1,20 @@
-﻿namespace KokoroSharp;
+namespace KokoroSharp;
 
 using Microsoft.ML.OnnxRuntime;
 
 using static KokoroSharp.KModel;
 
-/// <summary> All available V1 releases of the model in ONNX form, including Full Precision and Quantized forms. </summary>
-public enum KModel { float32, float16, int8 }
+/// <summary> All available V1 and V1.1 releases of the model in ONNX form, including Full Precision and Quantized forms. </summary>
+public enum KModel { float32, float16, zh_float32, zh_float16 }
 
 public partial class KokoroTTS {
     static IReadOnlyDictionary<KModel, string> ModelNamesMap { get; } = new Dictionary<KModel, string>() {
         { float32, "kokoro.onnx" },
-        { float16, "kokoro-quant.onnx" },
-        { int8,    "kokoro-quant-convinteger.onnx" },
+        { float16, "kokoro-fp16.onnx" },
+        { zh_float32, "kokoro-zh.onnx" },
+        { zh_float16, "kokoro-zh-fp16.onnx" },
     };
-    static string URL(KModel quant) => $"https://github.com/taylorchu/kokoro-onnx/releases/download/v0.2.0/{ModelNamesMap[quant]}";
+    static string URL(KModel model) => $"https://github.com/Lyrcaxis/KokoroSharpBinaries/releases/download/v2.0.0/{ModelNamesMap[model]}";
 
     static KokoroTTS() {
         try { _ = new SessionOptions(); }
@@ -68,7 +69,7 @@ public partial class KokoroTTS {
     /// <summary>
     /// Creates a new Kokoro TTS Engine instance, loading the model into memory and initializing a background worker thread to continuously scan for newly queued jobs, dispatching them in order, when it's free.
     /// <para> If 'options' is specified, the model will be loaded with them. This is particularly useful when needing to run on non-CPU backends, as the default backend otherwise is the CPU with 8 threads. </para>
-    /// <para> The model(s) can be found at https://github.com/taylorchu/kokoro-onnx/releases/tag/v0.2.0. </para>
+    /// <para> The model(s) can be found at https://github.com/Lyrcaxis/KokoroSharpBinaries/releases. </para>
     /// </summary>
     public static KokoroTTS LoadModel(string path, SessionOptions sessionOptions = null) => new KokoroTTS(path, sessionOptions);
 }

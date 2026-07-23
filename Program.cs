@@ -17,7 +17,7 @@ internal class Program {
     static (int a, int b, int c) Mix => (2, 10, 5);
 
     static void Main(string[] _) {
-        // You'll need to download the model first. You can find it in https://github.com/taylorchu/kokoro-onnx/releases/tag/v0.2.0.
+        // You'll need to download the model first. You can find it in https://github.com/Lyrcaxis/KokoroSharpBinaries/releases.
         var v = new SessionOptions();
         //v.AppendExecutionProvider_CUDA();
         using KokoroTTS tts = KokoroTTS.LoadModel(sessionOptions: v); // The high level inference engine provided by KokoroSharp. We instantiate once, cache it, and reuse it.

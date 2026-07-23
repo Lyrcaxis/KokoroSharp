@@ -9,7 +9,7 @@ It enables developers to perform flexible and fast text-to-speech synthesis util
 
 ## Features
 - Plug & Play integration via the nuget package. All dependencies are handled automatically.
-- Nuget package includes [ALL voices released by hexgrad with their Kokoro 82M v1.0 release](https://huggingface.co/hexgrad/Kokoro-82M/tree/main/voices).
+- Nuget package includes ALL voices released by hexgrad with their [Kokoro 82M v1.0](https://huggingface.co/hexgrad/Kokoro-82M/tree/main/voices) and [v1.1-zh](https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh/tree/main/voices) releases.
 - High-level interface designed to suit both beginners and power users.
 - Text-segment streaming for seamless text-to-speech. Responses feel instant.
 - Voice mixing with no restrictions on the amounts of voices mixed, and ability to save/load mixed voices.
@@ -38,7 +38,14 @@ while (true) { tts.SpeakFast(Console.ReadLine(), heartVoice); } // .. and have i
 
 Above is a simple way to get started on the highest level. For more control, check out [the example Program](https://github.com/Lyrcaxis/KokoroSharp/blob/main/Program.cs), which covers more advanced parts like job scheduling, voice mixing, and long-term, speaker-agnostic playback queuing.
 
-###### Models can be found on [taylorchu's releases](https://github.com/taylorchu/kokoro-onnx/releases/tag/v0.2.0), and can be loaded via `KokoroTTS.LoadModel("path/to/model")`, or downloaded automatically with `KokoroTTS.LoadModel()`. Check out the various overloads of `KokoroTTS.LoadModel` for background loading.
+###### Models can be found on [KokoroSharpBinaries' releases](https://github.com/Lyrcaxis/KokoroSharpBinaries/releases), and can be loaded via `KokoroTTS.LoadModel("path/to/model")`, or downloaded automatically with `KokoroTTS.LoadModel()`. Check out the various overloads of `KokoroTTS.LoadModel` for background loading.
+
+## Kokoro v1.1-zh (Chinese model & voices)
+```csharp
+KokoroTTS tts = KokoroTTS.LoadModel(KModel.zh_float32); // Load or download the Kokoro v1.1-zh model,
+tts.SpeakFast("你好，世界！", KokoroVoiceManager.GetVoice("zf_001")); // .. and speak with any of its voices!
+```
+###### The v1.1-zh voices come bundled with the package in `voices/voices-zh`, loaded automatically alongside the v1.0 ones.
 
 ## Notes
 - KokoroSharp prioritizes a smooth developer experience by logging potential misuse instead of throwing exceptions. Wherever possible, the library attempts to automatically resolve issues to minimize disruptions.

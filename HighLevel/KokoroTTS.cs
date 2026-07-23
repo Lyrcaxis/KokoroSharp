@@ -40,7 +40,7 @@ public sealed partial class KokoroTTS : KokoroEngine {
     /// <summary>
     /// Creates a new Kokoro TTS Engine instance, loading the model into memory and initializing a background worker thread to continuously scan for newly queued jobs, dispatching them in order, when it's free.
     /// <para> If 'options' is specified, the model will be loaded with them. This is particularly useful when needing to run on non-CPU backends, as the default backend otherwise is the CPU with 8 threads. </para>
-    /// <para> The model(s) can be found at https://github.com/taylorchu/kokoro-onnx/releases/tag/v0.2.0. </para>
+    /// <para> The model(s) can be found at https://github.com/Lyrcaxis/KokoroSharpBinaries/releases. </para>
     /// </summary>
     public KokoroTTS(string modelPath, SessionOptions options = null) : base(modelPath, options) { }
 
