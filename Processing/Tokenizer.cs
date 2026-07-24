@@ -2,6 +2,8 @@ namespace KokoroSharp.Processing;
 
 using KokoroSharp.Utilities;
 
+using MisakiSharp;
+
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -26,12 +28,20 @@ public static partial class Tokenizer {
     public static IReadOnlyDictionary<char, int> Vocab { get; }
     public static IReadOnlyDictionary<int, char> TokenToChar { get; }
     public static HashSet<int> PunctuationTokens { get; }
+
+    /// <summary> If true (default), English phonemizes natively via the misaki port (<see cref="EnglishG2P"/>) instead of espeak. </summary>
+    public static bool UseNativeEnglish { get; set; } = true;
+
     static Tokenizer() {
         Dictionary<char, int> _vocabNew = new() { ['\n'] = -1, ['$'] = 0, [';'] = 1, [':'] = 2, [','] = 3, ['.'] = 4, ['!'] = 5, ['?'] = 6, ['¡'] = 7, ['¿'] = 8, ['—'] = 9, ['…'] = 10, ['\"'] = 11, ['('] = 12, [')'] = 13, ['“'] = 14, ['”'] = 15, [' '] = 16, ['\u0303'] = 17, ['ʣ'] = 18, ['ʥ'] = 19, ['ʦ'] = 20, ['ʨ'] = 21, ['ᵝ'] = 22, ['\uAB67'] = 23, ['A'] = 24, ['I'] = 25, ['O'] = 31, ['Q'] = 33, ['S'] = 35, ['T'] = 36, ['W'] = 39, ['Y'] = 41, ['ᵊ'] = 42, ['a'] = 43, ['b'] = 44, ['c'] = 45, ['d'] = 46, ['e'] = 47, ['f'] = 48, ['h'] = 50, ['i'] = 51, ['j'] = 52, ['k'] = 53, ['l'] = 54, ['m'] = 55, ['n'] = 56, ['o'] = 57, ['p'] = 58, ['q'] = 59, ['r'] = 60, ['s'] = 61, ['t'] = 62, ['u'] = 63, ['v'] = 64, ['w'] = 65, ['x'] = 66, ['y'] = 67, ['z'] = 68, ['ɑ'] = 69, ['ɐ'] = 70, ['ɒ'] = 71, ['æ'] = 72, ['β'] = 75, ['ɔ'] = 76, ['ɕ'] = 77, ['ç'] = 78, ['ɖ'] = 80, ['ð'] = 81, ['ʤ'] = 82, ['ə'] = 83, ['ɚ'] = 85, ['ɛ'] = 86, ['ɜ'] = 87, ['ɟ'] =  90, ['ɡ'] = 92, ['ɥ'] = 99, ['ɨ'] = 101, ['ɪ'] = 102, ['ʝ'] = 103, ['ɯ'] = 110, ['ɰ'] = 111, ['ŋ'] = 112, ['ɳ'] = 113, ['ɲ'] = 114, ['ɴ'] = 115, ['ø'] = 116, ['ɸ'] = 118, ['θ'] = 119, ['œ'] = 120, ['ɹ'] = 123, ['ɾ'] = 125, ['ɻ'] = 126, ['ʁ'] = 128, ['ɽ'] = 129, ['ʂ'] = 130, ['ʃ'] = 131, ['ʈ'] = 132, ['ʧ'] = 133, ['ʊ'] = 135, ['ʋ'] = 136, ['ʌ'] = 138, ['ɣ'] = 139, ['ɤ'] = 140, ['χ'] = 142, ['ʎ'] = 143, ['ʒ'] = 147, ['ʔ'] = 148, ['ˈ'] = 156, ['ˌ'] = 157, ['ː'] = 158, ['ʰ'] = 162, ['ʲ'] = 164, ['↓'] = 169, ['→'] = 171, ['↗'] = 172, ['↘'] = 173, ['ᵻ'] = 177 };
 
+        Dictionary<char, int> _vocabZh = new() { ['/'] = 7, ['ㄓ'] = 23, ['ㄅ'] = 30, ['ㄆ'] = 32, ['R'] = 34, ['ㄇ'] = 37, ['ㄈ'] = 38, ['ㄉ'] = 40, ['ㄊ'] = 49, ['ㄋ'] = 73, ['ㄌ'] = 74, ['ㄍ'] = 79, ['ㄎ'] = 84, ['ㄦ'] = 85, ['ㄏ'] = 88, ['ㄐ'] = 89, ['ㄑ'] = 91, ['ㄒ'] = 93, ['ㄔ'] = 94, ['ㄕ'] = 95, ['ㄗ'] = 96, ['ㄘ'] = 97, ['ㄙ'] = 98, ['月'] = 99, ['ㄚ'] = 100, ['ㄛ'] = 104, ['ㄝ'] = 105, ['ㄞ'] = 106, ['ㄟ'] = 107, ['ㄠ'] = 108, ['ㄡ'] = 109, ['ㄢ'] = 117, ['ㄣ'] = 121, ['ㄤ'] = 122, ['ㄥ'] = 124, ['ㄖ'] = 126, ['ㄧ'] = 127, ['ㄨ'] = 134, ['ㄩ'] = 137, ['ㄜ'] = 140, ['ㄭ'] = 141, ['十'] = 144, ['压'] = 145, ['言'] = 146, ['阳'] = 149, ['要'] = 150, ['阴'] = 151, ['应'] = 152, ['用'] = 153, ['又'] = 154, ['中'] = 155, ['穵'] = 159, ['外'] = 160, ['万'] = 161, ['王'] = 163, ['为'] = 165, ['文'] = 166, ['瓮'] = 167, ['我'] = 168, ['3'] = 169, ['5'] = 170, ['1'] = 171, ['2'] = 172, ['4'] = 173, ['元'] = 175, ['云'] = 176 };
+
         var (c2t, t2c) = (new Dictionary<char, int>(), new Dictionary<int, char>());
         foreach (var (key, val) in _vocabNew) { (c2t[key], t2c[val]) = (val, key); }
+        foreach (var (key, val) in _vocabZh) { c2t[key] = val; t2c.TryAdd(val, key); }
         (Vocab, TokenToChar) = (c2t, t2c);
+        ChineseG2P.EnglishPhonemizer = text => Phonemize(text, "en-us"); // English fallback rather than becoming unk.
         //z = "ʼ↓↑→↗↘".Select(x => Vocab[x]).ToArray();
         PunctuationTokens = punctuation.Select(x => Vocab[x]).ToHashSet();
     }
@@ -48,8 +58,18 @@ public static partial class Tokenizer {
     public static int[] Tokenize(string inputText, string langCode = "en-us", bool preprocess = true) => Phonemize(inputText, langCode, preprocess).Select(x => Vocab[x]).ToArray();
 
 
+    static readonly Lazy<EnglishG2P> americanG2P = new(() => new EnglishG2P(EnglishG2P.DefaultTagger, british: false, espeakFallback: word => Phonemize_Internal(word, out _, "en-us").Trim()));
+    static readonly Lazy<EnglishG2P> britishG2P = new(() => new EnglishG2P(EnglishG2P.DefaultTagger, british: true, espeakFallback: word => Phonemize_Internal(word, out _, "en-gb").Trim()));
+
     /// <summary> Converts the input text into the corresponding phonemes, with slight preprocessing and post-processing to preserve punctuation and other TTS essentials. </summary>
     public static string Phonemize(string inputText, string langCode = "en-us", bool preprocess = true) {
+        if (langCode == "cmn") { return new string(ChineseG2P.Phonemize(inputText).Where(Vocab.ContainsKey).ToArray()); }
+        if (langCode is "en-us" or "en-gb" && UseNativeEnglish) {
+            var textParts = PhonemeLiteral().Split(inputText).Select(text => PhonemeLiteral2().IsMatch(text) || !preprocess ? text : PreprocessText(text, langCode));
+            var g2p = langCode == "en-gb" ? britishG2P.Value : americanG2P.Value;
+            var phonemes = g2p.Phonemize(string.Join(' ', textParts.Where(part => part.Length > 0))).Phonemes;
+            return new string(phonemes.Where(Vocab.ContainsKey).ToArray());
+        }
         var parts = PhonemeLiteral().Split(inputText).Select(text => {
             var m = PhonemeLiteral2().Match(text);
             if (m.Success) { var p = m.Groups[1].Value; return (p, p); }
