@@ -11,26 +11,18 @@ using System.Text.RegularExpressions;
 /// <summary> A static module responsible for tokenization converting plaintext to phonemes, and phonemes to tokens. </summary>
 /// <remarks>
 /// <para> Internally preprocesses and post-processes the input text to bring it closer to what the model expects to see. </para>
-/// <para> Phonemization happens via the espeak-ng library: <b>https://github.com/espeak-ng/espeak-ng/blob/master/docs/guide.md</b> </para>
+/// <para> Phonemization happens natively in C# via <b>https://github.com/Lyrcaxis/MisakiSharp</b> for all nine Kokoro languages. </para>
 /// </remarks>
 public static partial class Tokenizer {
-    static HashSet<char> spaceNeedingPhonemes = [.. "\"…<«“"];
     static HashSet<char> replaceablePhonemes = [.. "\n;:,.!?¡¿—…\"«»“”()"];
-    internal static HashSet<char> punctuation = [.. ";:,.!?…¿\n"];   // Lines split on any of these occurrences, by design via espeak-ng.
+    internal static HashSet<char> punctuation = [.. ";:,.!?…¿\n"];
     static Dictionary<char, string> currencies = new() { { '$', "dollar" }, { '€', "euro" }, { '£', "pound" }, { '¥', "yen" }, { '₹', "rupee" }, { '₽', "ruble" }, { '₩', "won" }, { '₺', "lira" }, { '₫', "dong" } };
     static char[] deletableCharacters = [.. "-`()[]{}"];
     //static int[] z ; // tokens that might be of interest later.
 
-    /// <summary> Path to the folder in which the espeak-ng binaries and data reside. Defaults to the folder created by the NuGet package. </summary>
-    /// <remarks> Can be overridden with a custom path if a use-case requires so. </remarks>
-    public static string eSpeakNGPath { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "espeak");
-
     public static IReadOnlyDictionary<char, int> Vocab { get; }
     public static IReadOnlyDictionary<int, char> TokenToChar { get; }
     public static HashSet<int> PunctuationTokens { get; }
-
-    /// <summary> If true (default), English phonemizes natively via the misaki port (<see cref="EnglishG2P"/>) instead of espeak. </summary>
-    public static bool UseNativeEnglish { get; set; } = true;
 
     static Tokenizer() {
         Dictionary<char, int> _vocabNew = new() { ['\n'] = -1, ['$'] = 0, [';'] = 1, [':'] = 2, [','] = 3, ['.'] = 4, ['!'] = 5, ['?'] = 6, ['¡'] = 7, ['¿'] = 8, ['—'] = 9, ['…'] = 10, ['\"'] = 11, ['('] = 12, [')'] = 13, ['“'] = 14, ['”'] = 15, [' '] = 16, ['\u0303'] = 17, ['ʣ'] = 18, ['ʥ'] = 19, ['ʦ'] = 20, ['ʨ'] = 21, ['ᵝ'] = 22, ['\uAB67'] = 23, ['A'] = 24, ['I'] = 25, ['O'] = 31, ['Q'] = 33, ['S'] = 35, ['T'] = 36, ['W'] = 39, ['Y'] = 41, ['ᵊ'] = 42, ['a'] = 43, ['b'] = 44, ['c'] = 45, ['d'] = 46, ['e'] = 47, ['f'] = 48, ['h'] = 50, ['i'] = 51, ['j'] = 52, ['k'] = 53, ['l'] = 54, ['m'] = 55, ['n'] = 56, ['o'] = 57, ['p'] = 58, ['q'] = 59, ['r'] = 60, ['s'] = 61, ['t'] = 62, ['u'] = 63, ['v'] = 64, ['w'] = 65, ['x'] = 66, ['y'] = 67, ['z'] = 68, ['ɑ'] = 69, ['ɐ'] = 70, ['ɒ'] = 71, ['æ'] = 72, ['β'] = 75, ['ɔ'] = 76, ['ɕ'] = 77, ['ç'] = 78, ['ɖ'] = 80, ['ð'] = 81, ['ʤ'] = 82, ['ə'] = 83, ['ɚ'] = 85, ['ɛ'] = 86, ['ɜ'] = 87, ['ɟ'] =  90, ['ɡ'] = 92, ['ɥ'] = 99, ['ɨ'] = 101, ['ɪ'] = 102, ['ʝ'] = 103, ['ɯ'] = 110, ['ɰ'] = 111, ['ŋ'] = 112, ['ɳ'] = 113, ['ɲ'] = 114, ['ɴ'] = 115, ['ø'] = 116, ['ɸ'] = 118, ['θ'] = 119, ['œ'] = 120, ['ɹ'] = 123, ['ɾ'] = 125, ['ɻ'] = 126, ['ʁ'] = 128, ['ɽ'] = 129, ['ʂ'] = 130, ['ʃ'] = 131, ['ʈ'] = 132, ['ʧ'] = 133, ['ʊ'] = 135, ['ʋ'] = 136, ['ʌ'] = 138, ['ɣ'] = 139, ['ɤ'] = 140, ['χ'] = 142, ['ʎ'] = 143, ['ʒ'] = 147, ['ʔ'] = 148, ['ˈ'] = 156, ['ˌ'] = 157, ['ː'] = 158, ['ʰ'] = 162, ['ʲ'] = 164, ['↓'] = 169, ['→'] = 171, ['↗'] = 172, ['↘'] = 173, ['ᵻ'] = 177 };
@@ -47,70 +39,38 @@ public static partial class Tokenizer {
     }
 
     /// <summary> Tokenizes pre-phonemized input "as-is", mapping to a token array directly usable by Kokoro. </summary>
-    /// <remarks> This is intended to act as a solution for platforms that do not support the eSpeak-NG backend. </remarks>
+    /// <remarks> Useful for developers who bring their own phonemization solution. </remarks>
     public static int[] TokenizePhonemes(char[] phonemes) => phonemes.Select(x => Vocab[x]).ToArray();
 
-    /// <summary>
-    /// <para> Converts the input text to phoneme tokens, directly usable by Kokoro. </para>
-    /// <para> Internally phonemizes the input text via eSpeak-NG, so this will not work on platforms like Android/iOS.</para>
-    /// <para> For such platforms, developers are expected to use their own phonemization solution and tokenize using <see cref="TokenizePhonemes(char[])"/>.</para>
-    /// </summary>
+    /// <summary> Converts the input text to phoneme tokens, directly usable by Kokoro. Phonemization is native C#, so it works on any .NET platform. </summary>
     public static int[] Tokenize(string inputText, string langCode = "en-us", bool preprocess = true) => Phonemize(inputText, langCode, preprocess).Select(x => Vocab[x]).ToArray();
 
 
-    static readonly Lazy<EnglishG2P> americanG2P = new(() => new EnglishG2P(EnglishG2P.DefaultTagger, british: false, espeakFallback: word => Phonemize_Internal(word, out _, "en-us").Trim()));
-    static readonly Lazy<EnglishG2P> britishG2P = new(() => new EnglishG2P(EnglishG2P.DefaultTagger, british: true, espeakFallback: word => Phonemize_Internal(word, out _, "en-gb").Trim()));
+    static readonly Lazy<EnglishG2P> americanG2P = new(() => new EnglishG2P(EnglishG2P.DefaultTagger, british: false));
+    static readonly Lazy<EnglishG2P> britishG2P = new(() => new EnglishG2P(EnglishG2P.DefaultTagger, british: true));
+    static readonly Dictionary<string, EspeakG2P> espeakG2Ps = [];
 
     /// <summary> Converts the input text into the corresponding phonemes, with slight preprocessing and post-processing to preserve punctuation and other TTS essentials. </summary>
     public static string Phonemize(string inputText, string langCode = "en-us", bool preprocess = true) {
         if (langCode == "cmn") { return new string(ChineseG2P.Phonemize(inputText).Where(Vocab.ContainsKey).ToArray()); }
-        if (langCode is "en-us" or "en-gb" && UseNativeEnglish) {
+        if (langCode == "ja") { return new string(JapaneseG2P.Phonemize(inputText).Where(Vocab.ContainsKey).ToArray()); }
+        if (langCode is "en-us" or "en-gb") {
             var textParts = PhonemeLiteral().Split(inputText).Select(text => PhonemeLiteral2().IsMatch(text) || !preprocess ? text : PreprocessText(text, langCode));
             var g2p = langCode == "en-gb" ? britishG2P.Value : americanG2P.Value;
             var phonemes = g2p.Phonemize(string.Join(' ', textParts.Where(part => part.Length > 0))).Phonemes;
             return new string(phonemes.Where(Vocab.ContainsKey).ToArray());
         }
-        var parts = PhonemeLiteral().Split(inputText).Select(text => {
-            var m = PhonemeLiteral2().Match(text);
-            if (m.Success) { var p = m.Groups[1].Value; return (p, p); }
-            if (preprocess) { text = PreprocessText(text, langCode); } // Preprocess the text if needed.
-            if (string.IsNullOrWhiteSpace(text)) { return (text, string.Empty); } // Skip empty strings.
-            return (text, Phonemize_Internal(CollectSymbols(text), out _, langCode)); // Collect symbols to prepare for phonemization.
-        }).ToList();
-
-        // Preprocessed text retains punctuation for PostProcessPhonemes to restore.
-        string preprocessedText = string.Join("", parts.Select(x => x.Item1));
-        var phonemeList = string.Join(' ', parts.Select(x => x.Item2)).Split('\n');
-        return PostProcessPhonemes(preprocessedText, phonemeList, langCode);
-    }
-
-    /// <summary> Invokes the platform-appropriate espeak-ng executable via command line, to convert given text into phonemes. </summary>
-    /// <remarks> eSpeak NG will return a line ending when it meets any of the <see cref="PunctuationTokens"/> and gets rid of any punctuation, so these will have to be converted back to a single-line, with the punctuation restored. </remarks>
-    public static string Phonemize_Internal(string text, out string originalSegments, string langCode = "en-us") {
-        using var process = new Process() {
-            StartInfo = new ProcessStartInfo() {
-                FileName = CrossPlatformHelper.GetEspeakBinariesPath(),
-                WorkingDirectory = null,
-                Arguments = $"--ipa=3 -b 1 -q -v {langCode} --stdin",
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                StandardInputEncoding = Encoding.UTF8,
-                StandardOutputEncoding = Encoding.UTF8
-            }
-        };
-        process.StartInfo.EnvironmentVariables.Add("ESPEAK_DATA_PATH", @$"{eSpeakNGPath}/espeak-ng-data");
-        process.Start();
-        Task.Run(async () => {
-            await process.StandardInput.WriteLineAsync(text);
-            process.StandardInput.Close();
-        });
-        originalSegments = process.StandardOutput.ReadToEnd();
-        Debug.WriteLine($"org:\n{originalSegments}---");
-        process.StandardOutput.Close();
-
-        return originalSegments.Replace("\r\n", "\n").Trim();
+        if (langCode is "es" or "fr" or "hi" or "it" or "pt-br") { // Kokoro's voices for these were trained on misaki's espeak pipeline, not raw espeak IPA.
+            // Phonemized entirely from MisakiSharp's measured espeak dump, with a letter-to-sound model for unknown words -- espeak is never spawned.
+            if (!espeakG2Ps.TryGetValue(langCode, out var g2p)) { espeakG2Ps[langCode] = g2p = new EspeakG2P(EspeakReplay.Provider(langCode)); }
+            var espeakParts = PhonemeLiteral().Split(inputText).Select(text => {
+                if (PhonemeLiteral2().Match(text) is { Success: true } m) { return m.Groups[1].Value; }
+                return g2p.Phonemize(preprocess ? PreprocessText(text, langCode) : text);
+            });
+            return new string(string.Join(' ', espeakParts.Where(part => part.Length > 0)).Where(Vocab.ContainsKey).ToArray());
+        }
+        Debug.WriteLine($"'{langCode}' is not one of Kokoro's nine languages, so there's nothing to phonemize with. Returning empty phonemes.");
+        return "";
     }
 
     /// <summary> Normalizes the input text to what the Kokoro model would expect to see, preparing it for phonemization. </summary>
@@ -172,56 +132,6 @@ public static partial class Tokenizer {
         for (int i = 0; i < 10; i++) { text = text.Replace("  ", " "); }
 
         return text.Trim();
-    }
-
-    static string CollectSymbols(string text) {
-        text = text.Replace("\n", "\n ");
-        foreach (var c in replaceablePhonemes) { text = text.Replace(c, ','); }
-        for (int i = 0; i < 10; i++) { text = text.Replace(" ,", ", "); }
-        //Debug.WriteLine(text);
-        return text;
-    }
-
-    /// <summary> Post-processes the phonemes to Kokoro's specs, preparing them for tokenization. </summary>
-    /// <remarks> We also use the initial text to restore the punctuation that was discarded by Espeak. </remarks>
-    static string PostProcessPhonemes(string initialText, string[] phonemesArray, string lang = "en-us") {
-        // Initial scan for punctuation and spacing, so they can later be restored.
-        var puncs = new List<string>();
-        for (int i = 0; i < initialText.Length; i++) {
-            char c = initialText[i];
-            if (replaceablePhonemes.Contains(c)) {
-                var punc = c.ToString();
-                while (i < initialText.Length - 1 && (replaceablePhonemes.Contains(initialText[++i]) || initialText[i] == ' ')) { punc += initialText[i]; }
-                puncs.Add(punc);
-            }
-        }
-
-        // Restoration of punctuation and spacing.
-        var sb = new StringBuilder();
-        for (int i = 0; i < phonemesArray.Length; i++) {
-            var vf = phonemesArray[i];
-            if (vf.StartsWith("ˈɛ")) { vf = "ˌɛ" + vf[2..]; }
-            sb.Append(vf);
-            if (puncs.Count > i) { sb.Append(puncs[i]); }
-        }
-        var phonemes = sb.ToString().Trim();
-
-        // Refinement of various phonemes and condensing of symbols.
-        for (int i = 0; i < 5; i++) { phonemes = phonemes.Replace("  ", " "); }
-        foreach (var f in punctuation) { phonemes = phonemes.Replace($" {f}", f.ToString()); }
-        for (int i = 0; i < 5; i++) { phonemes = phonemes.Replace("!!", "!").Replace("!?!", "!?"); }
-
-        for (int i = 1; i < phonemes.Length - 1; i++) {
-            if (!spaceNeedingPhonemes.Contains(phonemes[i])) { continue; }
-            if (phonemes[i - 1] != ' ') {
-                var ph = phonemes[i];
-                if (phonemes[i] == '"' && phonemes[i + 1] == ' ') { continue; }
-                phonemes = phonemes.Insert(i, " ");
-                i++;
-            }
-        }
-        phonemes = phonemes.Replace("ː ", " ").Replace("ɔː", "ˌɔ").Replace("\n ", "\n");
-        return new string(phonemes.Where(Vocab.ContainsKey).ToArray());
     }
 
     #region Regexes

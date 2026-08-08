@@ -1,4 +1,4 @@
-﻿namespace KokoroSharp.Utilities;
+namespace KokoroSharp.Utilities;
 
 using KokoroSharp.Core;
 using KokoroSharp.Processing;
@@ -41,7 +41,7 @@ public class KokoroWavSynthesizer : KokoroEngine {
             step.OnStepComplete = (samples) => {
                 Debug.WriteLine($"[{job.Steps.IndexOf(step) + 1}/{job.Steps.Count}] Retrieved {samples.Length} samples.");
                 bytes.AddRange(KokoroPlayback.GetBytes(KokoroPlayback.PostProcessSamples(samples)));
-                if (!Tokenizer.PunctuationTokens.Contains(step.Tokens[^1])) { return; }
+                if (step.Tokens.Length == 0 || !Tokenizer.PunctuationTokens.Contains(step.Tokens[^1])) { return; }
                 var secondsToWait = pipelineConfig.SecondsOfPauseBetweenProperSegments[Tokenizer.TokenToChar[step.Tokens[^1]]];
                 bytes.AddRange(KokoroPlayback.GetBytes(new float[(int) (secondsToWait * KokoroPlayback.waveFormat.SampleRate)]));
             };
