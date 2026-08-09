@@ -1,4 +1,6 @@
-﻿namespace KokoroSharp.Core;
+namespace KokoroSharp.Core;
+
+using KokoroSharp.Processing;
 
 /// <summary> Callback packet that gets sent when the speech playback starts. Called only once, regardless of segmentation. </summary>
 /// <remarks> Contains info about the full text that is to be spoken, and its phonemized form. </remarks>
@@ -22,11 +24,7 @@ public struct SpeechProgressPacket {
 
     /// <summary> The text that was spoken since the beginning of this speech/KokoroJob... <b>probably (!)</b> </summary>
     /// <remarks> <b>NOTE:</b> It might not be accurate because Kokoro doesn't provide per-spoken-phoneme info to ONNX, so we can only infer segments. </remarks>
-    public string SpokenText_BestGuess;
-
-    /// <summary> The text that was spoken since the previous "SpeechProgress" packet was sent... <b>probably (!)</b> </summary>
-    /// <remarks> <b>NOTE:</b> It might not be accurate because Kokoro doesn't provide per-spoken-phoneme info to ONNX, so we can only infer segments. </remarks>
-    //public string NewlySpokenText_BestGuess;
+    public string SpokenText;
 
     /// <summary> The Kokoro Job this speech packet is connected to. </summary>
     public KokoroJob RelatedJob;
@@ -39,21 +37,11 @@ public struct SpeechProgressPacket {
 /// <remarks> Note that "Cancel" will be SKIPPED for packets whose playback was aborted without ever starting. </remarks>
 public struct SpeechCancellationPacket {
 
-    /// <summary> The phonemes that were spoken since the beginning of this speech/KokoroJob. </summary>
-    /// <remarks> Note that these have <b>INDEED</b> been spoken but they do NOT include the last segment's phonemes. </remarks>
-    public char[] PhonemesSpoken_PrevSegments_Certain;
-
-    /// <summary> The phonemes that were spoken on the last segment before cancellation... <b>probably (!)</b> </summary>
-    /// <remarks> Note that these ONLY include the last segment's <b>best guess</b> of phonemes, based on the percentage spoken. </remarks>
-    public char[] PhonemesSpoken_LastSegment_BestGuess;
-
     /// <summary> The phonemes that were spoken since the beginning of this speech/KokoroJob... <b>probably (!)</b> </summary>
-    /// <remarks> Note that ones on the last segment will likely NOT be accurate, as they're based on the percentage spoken. </remarks>
-    public char[] PhonemesSpoken_BestGuess;
+    public char[] PhonemesSpoken;
 
     /// <summary> The text that was spoken since the beginning of this speech/KokoroJob... <b>probably (!)</b> </summary>
-    /// <remarks> <b>NOTE:</b> It might not be accurate because Kokoro doesn't provide per-spoken-phoneme info to ONNX, so we can only infer segments. </remarks>
-    public string SpokenText_BestGuess;
+    public string SpokenText;
 
     /// <summary> The Kokoro Job this speech packet is connected to. </summary>
     public KokoroJob RelatedJob;
@@ -91,6 +79,9 @@ public struct SpeechInfoPacket {
     /// <summary> The phonemes of the current segment. </summary>
     public char[] SegmentPhonemes;
 
+    /// <summary> Exact timings for the current segment's phonemes. Null if the model doesn't output durations. </summary>
+    public PhonemeTimestamp[] SegmentTimestamps;
+
     /// <summary> ALL phonemes that the speech job of interest has to speak. </summary>
     public char[] AllPhonemes;
 
@@ -100,4 +91,48 @@ public struct SpeechInfoPacket {
     /// <summary> The percentage in which the current segment was cut. [0, 1]. </summary>
     /// <remarks> If the speech was NOT canceled, this should have a value of '1'. </remarks>
     public float SegmentCutT;
+
+    /// <summary> Seconds of the current segment's raw audio played so far. Lines up with <see cref="SegmentTimestamps"/>. </summary>
+    public float SegmentPlayedSeconds;
+}
+
+/// <summary> Callback packet that gets sent in real time when a phoneme starts being spoken during playback. </summary>
+/// <remarks> Useful for lip-sync (visemes) and word highlighting. </remarks>
+public struct PhonemeReachedPacket {
+    /// <summary> The phoneme that just started being spoken, with its exact timing within the current segment's raw audio. </summary>
+    public PhonemeTimestamp Timestamp;
+
+    /// <summary> The Kokoro Job this speech packet is connected to. </summary>
+    public KokoroJob RelatedJob;
+
+    /// <summary> The Kokoro Job Step this speech packet is connected to. </summary>
+    public KokoroJob.KokoroJobStep RelatedStep;
+}
+
+/// <summary> The exact time span a single phoneme occupies within its segment's audio. </summary>
+/// <remarks> Produced from the model's 'durations' output. </remarks>
+public readonly struct PhonemeTimestamp {
+    /// <summary> The phoneme character, as found in <see cref="Tokenizer.Vocab"/>. </summary>
+    public char Phoneme { get; init; }
+
+    /// <summary> The second (relative to the segment's raw audio) this phoneme starts being spoken. </summary>
+    public float StartSecond { get; init; }
+
+    /// <summary> The second (relative to the segment's raw audio) this phoneme stops being spoken. </summary>
+    public float EndSecond { get; init; }
+
+    /// <summary> Maps the model's padded per-token durations onto the step's tokens, distributing the audio's actual length proportionally. </summary>
+    /// <remarks> Returns null when durations are unavailable or misaligned (models without a 'durations' output, or inputs that got trimmed to the token limit). </remarks>
+    public static PhonemeTimestamp[] FromModelOutput(int[] tokens, int[] paddedDurations, int sampleCount) {
+        if (paddedDurations == null || paddedDurations.Length != tokens.Length + 2 || sampleCount == 0) { return null; }
+        var secondsPerUnit = sampleCount / (float) 24_000 / paddedDurations.Sum();
+        var timestamps = new PhonemeTimestamp[tokens.Length];
+        var elapsedUnits = paddedDurations[0]; // [0] and [^1] belong to the <start>/<end> padding tokens.
+        for (int i = 0; i < tokens.Length; i++) {
+            var startSecond = elapsedUnits * secondsPerUnit;
+            elapsedUnits += paddedDurations[i + 1];
+            timestamps[i] = new() { Phoneme = Tokenizer.TokenToChar.GetValueOrDefault(tokens[i]), StartSecond = startSecond, EndSecond = elapsedUnits * secondsPerUnit };
+        }
+        return timestamps;
+    }
 }

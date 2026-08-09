@@ -1,4 +1,4 @@
-﻿namespace KokoroSharp.Core;
+namespace KokoroSharp.Core;
 
 public enum KokoroPlaybackHandleState { Queued, InProgress, Completed, Aborted }
 
@@ -10,6 +10,8 @@ public class PlaybackHandle {
     public Action OnSpoken;
     public Action<(float time, float percentage)> OnCanceled;
     public Action OnAborted;
+
+    internal Action<float> OnDuringPlayback; // probably boilerplate. Runs every 10ms for polling-like behaviour.
 
     /// <summary> The playback instance that owns this handle. </summary>
     public KokoroPlayback Owner { get; init; }
@@ -55,6 +57,9 @@ public class SynthesisHandle {
     /// <summary> Callback raised when the playback was stopped amidst speech. Can retrieve which parts were spoken, in part or in full. </summary>
     /// <remarks> Note that "Cancel" will NOT BE CALLED for speeches whose playback never ever started. Consider subscribing to this in `OnSpeechStarted`. </remarks>
     public Action<SpeechCancellationPacket> OnSpeechCanceled;
+
+    /// <summary> Callback raised in real time as each phoneme starts being spoken during playback. Useful for lip-sync (visemes) and word highlighting. </summary>
+    public Action<PhonemeReachedPacket> OnPhonemeReached;
 
 
     /// <summary> The inference job this handle is connected to. </summary>

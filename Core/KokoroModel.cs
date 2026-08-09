@@ -1,4 +1,4 @@
-﻿namespace KokoroSharp.Core;
+namespace KokoroSharp.Core;
 
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
@@ -21,7 +21,12 @@ public sealed class KokoroModel : IDisposable {
 
     /// <summary> Requests inference with the Model via the ONNX runtime, with specified tokens, style, and speed. </summary>
     /// <remarks> Synchronously waits for the output (audio samples), and returns them when ready. Best used in async context. </remarks>
-    public float[] Infer(int[] tokens, float[,,] voiceStyle, float speed = 1) {
+    public float[] Infer(int[] tokens, float[,,] voiceStyle, float speed = 1) => Infer(tokens, voiceStyle, speed, out _);
+
+    /// <summary> Requests inference with the Model via the ONNX runtime, with specified tokens, style, and speed. </summary>
+    /// <remarks> 'paddedTokenDurations' gets the model's duration units for each of &lt;start&gt;{tokens}&lt;end&gt;, or null if the model doesn't output durations. </remarks>
+    public float[] Infer(int[] tokens, float[,,] voiceStyle, float speed, out int[] paddedTokenDurations) {
+        paddedTokenDurations = null;
         var (B, T, C) = (1, tokens.Length, voiceStyle.GetLength(2));
         if (tokens.Length == 0) {
             Debug.WriteLine("Received empty input token array. Returning empty float array.");
@@ -47,6 +52,7 @@ public sealed class KokoroModel : IDisposable {
         lock (session) {
             if (_isDisposed) { return []; }
             using var results = session.Run(inputs);
+            if (results.FirstOrDefault(x => x.Name == "durations") is { } durations) { paddedTokenDurations = [.. durations.AsTensor<long>().Select(x => (int) x)]; }
             return [.. results[0].AsTensor<float>()];
         }
         NamedOnnxValue GetOnnxValue<T>(string name, DenseTensor<T> val) => NamedOnnxValue.CreateFromTensor(name, val);

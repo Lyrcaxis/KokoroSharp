@@ -32,9 +32,9 @@ internal class Program {
 
         // You can access and subscribe to various callbacks regarding speech to stay informed:
         tts.OnSpeechStarted    += (s) => Debug.WriteLine($"Started:   {new string(s.PhonemesToSpeak)}");
-        tts.OnSpeechProgressed += (p) => Debug.WriteLine($"Progress:  {new string(p.SpokenText_BestGuess)}");
+        tts.OnSpeechProgressed += (p) => Debug.WriteLine($"Progress:  {new string(p.SpokenText)}");
         tts.OnSpeechCompleted  += (c) => Debug.WriteLine($"Completed: {new string(c.PhonemesSpoken)}");
-        tts.OnSpeechCanceled   += (c) => Debug.WriteLine($"Canceled:  {new string(c.SpokenText_BestGuess)}");
+        tts.OnSpeechCanceled   += (c) => Debug.WriteLine($"Canceled:  {new string(c.SpokenText)}");
 
         while (true) {
             Console.Write("Type text to speak: ");

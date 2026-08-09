@@ -1,4 +1,4 @@
-﻿namespace KokoroSharp;
+namespace KokoroSharp;
 
 using KokoroSharp.Core;
 using KokoroSharp.Utilities;
@@ -28,18 +28,18 @@ public sealed class KokoroPlayback : IDisposable {
                 while (!hasExited && queuedPackets.TryDequeue(out var packet)) {
                     if (packet.Aborted) { continue; }
 
-                    var (samples, startTime) = (packet.Samples, DateTime.Now);
+                    var (samples, startIndex) = (packet.Samples, 0);
                     packet.OnStarted?.Invoke();
-                    if (NicifySamples) { samples = PostProcessSamples(samples); }
+                    if (NicifySamples) { samples = PostProcessSamples(samples, out startIndex); }
 
                     var stream = new RawSourceWaveStream(GetBytes(samples), 0, samples.Length * 2, waveFormat);
                     waveOut.Init(stream); waveOut.Play(); // Initialize and play the audio stream, then wait until it's done.
-                    while (!hasExited && !packet.Aborted && waveOut.PlaybackState == PlaybackState.Playing) { await Task.Delay(10); }
+                    while (!hasExited && !packet.Aborted && waveOut.PlaybackState == PlaybackState.Playing) { packet.OnDuringPlayback?.Invoke((startIndex + stream.Position / 2f) / waveFormat.SampleRate); await Task.Delay(10); }
                     if (!hasExited && packet.Aborted) { waveOut.Stop(); }
 
                     // Once playback finished, invoke the correct callback.
                     if (stream.Position == stream.Length) { packet.OnSpoken?.Invoke(); packet.State = KokoroPlaybackHandleState.Completed; }
-                    else { packet.OnCanceled?.Invoke(((float) (DateTime.Now - startTime).TotalSeconds, (float) (stream.Position / (float) stream.Length))); }
+                    else { packet.OnCanceled?.Invoke(((startIndex + stream.Position / 2f) / waveFormat.SampleRate, stream.Position / (float) stream.Length)); }
                     stream.Dispose();
                 }
             }
@@ -84,7 +84,11 @@ public sealed class KokoroPlayback : IDisposable {
 
     /// <summary> Performs some pre-processing on target samples, like trimming silence, and discarding potential noise. </summary>
     /// <remarks> Returns a new array with the processed audio samples. Note that the returned array will likely be smaller in size. </remarks>
-    public static float[] PostProcessSamples(float[] samples) {
+    public static float[] PostProcessSamples(float[] samples) => PostProcessSamples(samples, out _);
+
+    /// <summary> Performs some pre-processing on target samples, like trimming silence, and discarding potential noise. </summary>
+    /// <remarks> 'trimmedFromStart' gets the number of samples trimmed from the start. </remarks>
+    public static float[] PostProcessSamples(float[] samples, out int skippedStartSamples) {
         var (start, end) = (0, samples.Length - 1);
         while (start < samples.Length && Math.Abs(samples[start]) <= 0.0001f) { start++; }
         while (end > start && Math.Abs(samples[end]) <= 0.0001f) { end--; }
@@ -92,7 +96,8 @@ public sealed class KokoroPlayback : IDisposable {
 
         float[] trimmedSamples = new float[end - start + 1];
         Array.Copy(samples, start, trimmedSamples, 0, trimmedSamples.Length);
-        if (trimmedSamples.Length == 0) { return samples; }
+        skippedStartSamples = start;
+        if (trimmedSamples.Length == 0) { skippedStartSamples = 0; return samples; }
         return trimmedSamples;
     }
 

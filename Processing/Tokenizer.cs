@@ -17,7 +17,7 @@ public static partial class Tokenizer {
     static HashSet<char> replaceablePhonemes = [.. "\n;:,.!?¡¿—…\"«»“”()"];
     internal static HashSet<char> punctuation = [.. ";:,.!?…¿\n"];
     static Dictionary<char, string> currencies = new() { { '$', "dollar" }, { '€', "euro" }, { '£', "pound" }, { '¥', "yen" }, { '₹', "rupee" }, { '₽', "ruble" }, { '₩', "won" }, { '₺', "lira" }, { '₫', "dong" } };
-    static char[] deletableCharacters = [.. "-`()[]{}"];
+    static char[] deletableCharacters = [.. "-`()[]{}~"];
     //static int[] z ; // tokens that might be of interest later.
 
     public static IReadOnlyDictionary<char, int> Vocab { get; }
@@ -51,26 +51,28 @@ public static partial class Tokenizer {
     static readonly Dictionary<string, EspeakG2P> espeakG2Ps = [];
 
     /// <summary> Converts the input text into the corresponding phonemes, with slight preprocessing and post-processing to preserve punctuation and other TTS essentials. </summary>
+    /// <remarks> Phonemization happens per line, so line breaks survive into the phonemes for <see cref="SegmentationSystem"/> to pause on. </remarks>
     public static string Phonemize(string inputText, string langCode = "en-us", bool preprocess = true) {
-        if (langCode == "cmn") { return new string(ChineseG2P.Phonemize(inputText).Where(Vocab.ContainsKey).ToArray()); }
-        if (langCode == "ja") { return new string(JapaneseG2P.Phonemize(inputText).Where(Vocab.ContainsKey).ToArray()); }
-        if (langCode is "en-us" or "en-gb") {
-            var textParts = PhonemeLiteral().Split(inputText).Select(text => PhonemeLiteral2().IsMatch(text) || !preprocess ? text : PreprocessText(text, langCode));
-            var g2p = langCode == "en-gb" ? britishG2P.Value : americanG2P.Value;
-            var phonemes = g2p.Phonemize(string.Join(' ', textParts.Where(part => part.Length > 0))).Phonemes;
-            return new string(phonemes.Where(Vocab.ContainsKey).ToArray());
+        if (preprocess) { inputText = string.Join(' ', PhonemeLiteral().Split(inputText).Select(part => PhonemeLiteral2().IsMatch(part) ? part : PreprocessText(part, langCode)).Where(part => part.Length > 0)); }
+        return string.Join('\n', inputText.Split('\n').Select(PhonemizeLine));
+
+        string PhonemizeLine(string line) {
+            if (string.IsNullOrWhiteSpace(line)) { return ""; }
+            if (langCode == "cmn") { return new string(ChineseG2P.Phonemize(line).Where(Vocab.ContainsKey).ToArray()); }
+            if (langCode == "ja") { return new string(JapaneseG2P.Phonemize(line).Where(Vocab.ContainsKey).ToArray()); }
+            if (langCode is "en-us" or "en-gb") {
+                var g2p = langCode == "en-gb" ? britishG2P.Value : americanG2P.Value;
+                return new string(g2p.Phonemize(line).Phonemes.Where(Vocab.ContainsKey).ToArray());
+            }
+            if (langCode is "es" or "fr" or "hi" or "it" or "pt-br") { // Kokoro's voices for these were trained on misaki's espeak pipeline, not raw espeak IPA.
+                // Phonemized entirely from MisakiSharp's measured espeak dump, with a letter-to-sound model for unknown words -- espeak is never spawned.
+                if (!espeakG2Ps.TryGetValue(langCode, out var g2p)) { espeakG2Ps[langCode] = g2p = new EspeakG2P(EspeakReplay.Provider(langCode)); }
+                var espeakParts = PhonemeLiteral().Split(line).Select(part => PhonemeLiteral2().Match(part) is { Success: true } m ? m.Groups[1].Value : g2p.Phonemize(part));
+                return new string(string.Join(' ', espeakParts.Where(part => part.Length > 0)).Where(Vocab.ContainsKey).ToArray());
+            }
+            Debug.WriteLine($"'{langCode}' is not one of Kokoro's nine languages, so there's nothing to phonemize with. Returning empty phonemes.");
+            return "";
         }
-        if (langCode is "es" or "fr" or "hi" or "it" or "pt-br") { // Kokoro's voices for these were trained on misaki's espeak pipeline, not raw espeak IPA.
-            // Phonemized entirely from MisakiSharp's measured espeak dump, with a letter-to-sound model for unknown words -- espeak is never spawned.
-            if (!espeakG2Ps.TryGetValue(langCode, out var g2p)) { espeakG2Ps[langCode] = g2p = new EspeakG2P(EspeakReplay.Provider(langCode)); }
-            var espeakParts = PhonemeLiteral().Split(inputText).Select(text => {
-                if (PhonemeLiteral2().Match(text) is { Success: true } m) { return m.Groups[1].Value; }
-                return g2p.Phonemize(preprocess ? PreprocessText(text, langCode) : text);
-            });
-            return new string(string.Join(' ', espeakParts.Where(part => part.Length > 0)).Where(Vocab.ContainsKey).ToArray());
-        }
-        Debug.WriteLine($"'{langCode}' is not one of Kokoro's nine languages, so there's nothing to phonemize with. Returning empty phonemes.");
-        return "";
     }
 
     /// <summary> Normalizes the input text to what the Kokoro model would expect to see, preparing it for phonemization. </summary>
@@ -96,6 +98,8 @@ public static partial class Tokenizer {
         text = CodeBlock().Replace(text, m => m.Groups[1].Value.Replace("  dot ", ".").Replace("dot \n", ".\n"));
         text = TickQuote().Replace(text, m => m.Groups[1].Value.Replace(".", " dot "));
         text = text.Replace("C#", "C SHARP").Replace(".NET", "dot net").Replace("->", " to ");
+        text = Approximately().Replace(text, "about "); // Convert "~5" to "about 5".
+        text = GroupingComma().Replace(text, ""); // Convert "15,000" to "15000"
         text = ByteNumber().Replace(text, m => {
             string u = m.Groups[2].Value switch {
                 "KB" => " kilobyte",
@@ -106,6 +110,7 @@ public static partial class Tokenizer {
             };
             return $"{m.Groups[1].Value}{u}{m.Groups[3].Value}";
         });
+        text = "\n" + text; // Lets headers at the very start of the text convert too.
         text = text.Replace("/", " slash ")
             .Replace("\n###### ", "\n Subnote: ")
             .Replace("\n##### ", "\n Minor note: ")
@@ -114,7 +119,7 @@ public static partial class Tokenizer {
             .Replace("\n## ", "\n Subheader: ")
             .Replace("\n# ", "\n Header: ");
         text = text.Replace(".com", "dot com").Replace("https://", "https ");
-        text = text.Replace("\r\n", "\n").Replace("**", "*").Replace("‘", "\"").Replace("’", "\"");
+        text = text.Replace("\r\n", "\n").Replace("**", "*").Replace("‘", "\"").Replace("’", "\"").Replace('।', '.').Replace('॥', '.');
         foreach (var c in currencies.Keys) { text = text.Replace(c.ToString(), $" {currencies[c]} "); } // Convert currency symbols to words (e.g., $ -> "dollar").
         text = Doctor().Replace(text, "Doctor");
         text = Mister().Replace(text, "Mister");
@@ -122,7 +127,8 @@ public static partial class Tokenizer {
         text = WhiteSpace().Replace(text," ");
         text = Time().Replace(text, "$1 $2");
         text = text.Replace("{", ",").Replace("}", ",").Replace("(", ",").Replace(")", ",");
-        foreach (var c in deletableCharacters) { text = text.Replace(c.ToString(), " "); }
+        var deletable = langCode is "en-us" or "en-gb" ? deletableCharacters.Where(c => c != '-') : deletableCharacters; // Misaki reads English "voice-loading" compounds glued, like espeak did.
+        foreach (var c in deletable) { text = text.Replace(c.ToString(), " "); }
         foreach (var punc in punctuation) {
             while (text.Contains($" {punc}")) { text = text.Replace($" {punc}", $"{punc}"); }
             text = text.Replace($"{punc}", $"{punc} ");
@@ -152,6 +158,8 @@ public static partial class Tokenizer {
     [GeneratedRegex(@"\b(Ms|MS)\.(?= [A-Z])")]                       private static partial Regex Miss();            // Miss: Ms. Smith
     [GeneratedRegex(@"\x20{2,}")]                                    private static partial Regex WhiteSpace();      // Multiple spaces: "  "
     [GeneratedRegex(@"(?<!\:)\b([1-9]|1[0-2]):([0-5]\d)\b(?!\:)")]   private static partial Regex Time();            // Time: 12:30, 9:45, etc.
+    [GeneratedRegex(@"~\s*(?=\d)")]                                  private static partial Regex Approximately();   // Approximate numbers: ~320
+    [GeneratedRegex(@"(?<=\d),(?=\d\d\d\b)")]                        private static partial Regex GroupingComma();   // Digit grouping: 15,000
     [GeneratedRegex(@"(\[[^\]]+\]\(/[^/]+/\))")]                     private static partial Regex PhonemeLiteral();  // Literal Pronunciation: [Kokoro](/kˈOkəɹO/). Captures the entire string
     [GeneratedRegex(@"\[[^\]]+\]\(/([^/]+)/\)")]                     private static partial Regex PhonemeLiteral2(); // Literal Pronunciation: [Kokoro](/kˈOkəɹO/). Captures only the phoneme part e.g. kˈOkəɹO
 
