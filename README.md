@@ -21,7 +21,7 @@ Supports languages/accents:
 
 ## How to setup
 - **On Windows, Linux, and MacOS:** Install via **Nuget** ([Package Manager](https://learn.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-in-visual-studio) or [CLI](https://learn.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-using-the-dotnet-cli)), and you're set!
-- **Selecting the correct package:** [KokoroSharp.CPU](https://www.nuget.org/packages/KokoroSharp.CPU) is plug-and-play. For GPU support, see [RUNNING_ON_GPU.md]().
+- **Selecting the correct package:** [KokoroSharp.CPU](https://www.nuget.org/packages/KokoroSharp.CPU) is plug-and-play. For GPU support, see [RUNNING_ON_GPU.md](https://github.com/Lyrcaxis/KokoroSharp/blob/main/RUNNING_ON_GPU.md).
 - **On Android**: KokoroSharp **should** work on mobile as of v0.8.3, using [KokoroSharp.Android](https://www.nuget.org/packages/KokoroSharp.Android).
 - **On iOS**: iOS is supported as of v0.8.1. Full synthesis, and playback with a custom `CrossPlatformHelper.CustomAudioPlayer`.
 
