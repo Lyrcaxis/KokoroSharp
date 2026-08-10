@@ -32,6 +32,7 @@
     <ItemGroup>
         <None Remove="Tests\**" />
         <None Remove="Runtimes\**" />
+        <Compile Remove="Runtimes\**" />
     </ItemGroup>
 
     <ItemGroup>

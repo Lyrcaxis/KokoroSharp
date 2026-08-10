@@ -1,8 +1,12 @@
 <Project>
-    <Target Name="CopyContent" AfterTargets="Build">
+    <Target Name="CopyContent" AfterTargets="Build" Condition="'$(TargetPlatformIdentifier)' != 'android'">
         <ItemGroup>
             <Files Include="$(MSBuildThisFileDirectory)..\content\**\*" />
         </ItemGroup>
         <Copy SourceFiles="@(Files)" DestinationFiles="@(Files->'$(OutputPath)\%(RecursiveDir)%(Filename)%(Extension)')" />
     </Target>
+
+    <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'android'">
+        <AndroidAsset Include="$(MSBuildThisFileDirectory)..\content\voices\**\*.npy" Link="voices\%(RecursiveDir)%(Filename)%(Extension)" />
+    </ItemGroup>
 </Project>

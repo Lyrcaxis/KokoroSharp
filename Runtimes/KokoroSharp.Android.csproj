@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0-android</TargetFramework>
+        <RootNamespace>KokoroSharp</RootNamespace>
+        <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PackageId>KokoroSharp.Android</PackageId>
+        <Description>The plug-and-play Android runtime for KokoroSharp: an inference engine for Kokoro TTS with ONNX runtime, enabling fast and flexible local text-to-speech (fp/quanted) purely via C#. Bundles the voices into the APK and plays back through Android's AudioTrack. Call KokoroSharpAndroid.Init() once on startup.</Description>
+        <PackageTags>Kokoro, TextToSpeech, TTS, ONNX, AI, SpeechSynthesis, Text, To, Speech, .NET, Android, Mobile, Offline</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.22.0" />
+        <ProjectReference Include="..\KokoroSharp.csproj" />
+        <None Include="..\README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+</Project>
