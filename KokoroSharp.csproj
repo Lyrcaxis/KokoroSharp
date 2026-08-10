@@ -17,7 +17,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.22.0" />
-        <PackageReference Include="MisakiSharp" Version="2.0.1" />
+        <PackageReference Include="MisakiSharp" Version="2.1.1" />
         <PackageReference Include="NAudio" Version="2.2.1" />
         <PackageReference Include="NumSharp" Version="0.30.0" />
         <PackageReference Include="OpenTK.Audio.OpenAL" Version="5.0.0-pre.13" />

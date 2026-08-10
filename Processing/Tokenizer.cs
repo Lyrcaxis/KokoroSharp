@@ -46,9 +46,19 @@ public static partial class Tokenizer {
     public static int[] Tokenize(string inputText, string langCode = "en-us", bool preprocess = true) => Phonemize(inputText, langCode, preprocess).Select(x => Vocab[x]).ToArray();
 
 
-    static readonly Lazy<EnglishG2P> americanG2P = new(() => new EnglishG2P(EnglishG2P.DefaultTagger, british: false));
-    static readonly Lazy<EnglishG2P> britishG2P = new(() => new EnglishG2P(EnglishG2P.DefaultTagger, british: true));
+    static readonly List<(string word, string phonemes)> customEnglishWords = [("kokoro", "kOkˈOɹO"), ("KokoroSharp", "kOkˈOɹO ʃˈɑɹp")]; // kokoro-specific.
+    static readonly Lazy<EnglishG2P> americanG2P = new(() => CreateEnglishG2P(british: false));
+    static readonly Lazy<EnglishG2P> britishG2P = new(() => CreateEnglishG2P(british: true));
     static readonly Dictionary<string, EspeakG2P> espeakG2Ps = [];
+    static EnglishG2P CreateEnglishG2P(bool british) { var g2p = new EnglishG2P(EnglishG2P.DefaultTagger, british: british); g2p.AddWords(customEnglishWords); return g2p; }
+
+    /// <summary> Teaches the English phonemizers custom pronunciations (e.g. brand names), applied to both dialects, winning over the lexicon and fallback. </summary>
+    /// <remarks> Capitalization variants are covered automatically ("kokoro" also covers "Kokoro"). Phonemes use misaki's IPA, e.g. "kOkˈOɹO". </remarks>
+    public static void AddWords(List<(string word, string phonemes)> dict) {
+        customEnglishWords.AddRange(dict);
+        foreach (var g2p in new[] { americanG2P, britishG2P }) { if (g2p.IsValueCreated) { g2p.Value.AddWords(dict); } }
+    }
+
 
     /// <summary> Converts the input text into the corresponding phonemes, with slight preprocessing and post-processing to preserve punctuation and other TTS essentials. </summary>
     /// <remarks> Phonemization happens per line, so line breaks survive into the phonemes for <see cref="SegmentationSystem"/> to pause on. </remarks>
