@@ -1,4 +1,4 @@
-﻿namespace KokoroSharp.Core;
+namespace KokoroSharp.Core;
 
 using System.Linq;
 
@@ -25,9 +25,10 @@ public class KokoroJob {
         var step = Steps[StepIndex];
         step.OnStepStarted?.Invoke();
 
-        var output = model.Infer(step.Tokens, step.VoiceStyle, step.Speed);
+        var output = model.Infer(step.Tokens, step.VoiceStyle, step.Speed, out var paddedTokenDurations);
         if (State == KokoroJobState.Canceled) { return; }
 
+        step.Timestamps = PhonemeTimestamp.FromModelOutput(step.Tokens, paddedTokenDurations, output.Length);
         step.OnStepComplete?.Invoke(output);
         if (++StepIndex >= Steps.Count) { State = KokoroJobState.Completed; }
     }
@@ -52,6 +53,9 @@ public class KokoroJob {
         public int[] Tokens { get; init; }
         public float[,,] VoiceStyle { get; init; }
 
+        /// <summary> Exact per-phoneme timings within this step's raw audio, populated right before <see cref="OnStepComplete"/> gets invoked. </summary>
+        public PhonemeTimestamp[] Timestamps { get; internal set; }
+
         /// <summary> Gets invoked when this step gets into scope and sent to the model for inference. </summary>
         public Action OnStepStarted { get; set; }
 
@@ -59,6 +63,7 @@ public class KokoroJob {
         public Action<float[]> OnStepComplete { get; set; }
 
         public KokoroJobStep(int[] tokens, float[,,] voiceStyle, float speed, Action<float[]> OnComplete) {
+            if (tokens.Length > KokoroModel.maxTokens) { tokens = tokens[..KokoroModel.maxTokens]; }
             (Tokens, VoiceStyle, Speed) = (tokens, voiceStyle, speed);
             OnStepComplete = OnComplete;
         }

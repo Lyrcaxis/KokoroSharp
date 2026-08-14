@@ -17,7 +17,7 @@ internal class Program {
     static (int a, int b, int c) Mix => (2, 10, 5);
 
     static void Main(string[] _) {
-        // You'll need to download the model first. You can find it in https://github.com/taylorchu/kokoro-onnx/releases/tag/v0.2.0.
+        // You'll need to download the model first. You can find it in https://github.com/Lyrcaxis/KokoroSharpBinaries/releases.
         var v = new SessionOptions();
         //v.AppendExecutionProvider_CUDA();
         using KokoroTTS tts = KokoroTTS.LoadModel(sessionOptions: v); // The high level inference engine provided by KokoroSharp. We instantiate once, cache it, and reuse it.
@@ -32,9 +32,9 @@ internal class Program {
 
         // You can access and subscribe to various callbacks regarding speech to stay informed:
         tts.OnSpeechStarted    += (s) => Debug.WriteLine($"Started:   {new string(s.PhonemesToSpeak)}");
-        tts.OnSpeechProgressed += (p) => Debug.WriteLine($"Progress:  {new string(p.SpokenText_BestGuess)}");
+        tts.OnSpeechProgressed += (p) => Debug.WriteLine($"Progress:  {new string(p.SpokenText)}");
         tts.OnSpeechCompleted  += (c) => Debug.WriteLine($"Completed: {new string(c.PhonemesSpoken)}");
-        tts.OnSpeechCanceled   += (c) => Debug.WriteLine($"Canceled:  {new string(c.SpokenText_BestGuess)}");
+        tts.OnSpeechCanceled   += (c) => Debug.WriteLine($"Canceled:  {new string(c.SpokenText)}");
 
         while (true) {
             Console.Write("Type text to speak: ");

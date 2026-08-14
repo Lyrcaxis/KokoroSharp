@@ -17,6 +17,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.22.0" />
+        <PackageReference Include="MisakiSharp" Version="2.1.1" />
         <PackageReference Include="NAudio" Version="2.2.1" />
         <PackageReference Include="NumSharp" Version="0.30.0" />
         <PackageReference Include="OpenTK.Audio.OpenAL" Version="5.0.0-pre.13" />
@@ -25,13 +26,13 @@
 
     <ItemGroup>
         <Content Include="voices/**" PackagePath="content/voices" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="espeak/**" PackagePath="content/espeak" CopyToOutputDirectory="PreserveNewest" />
         <None Include="README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 
     <ItemGroup>
         <None Remove="Tests\**" />
         <None Remove="Runtimes\**" />
+        <Compile Remove="Runtimes\**" />
     </ItemGroup>
 
     <ItemGroup>

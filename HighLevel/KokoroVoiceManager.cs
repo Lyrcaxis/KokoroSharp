@@ -16,7 +16,7 @@ public static class KokoroVoiceManager {
             voicesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, voicesPath);
 
         if (!Directory.Exists(voicesPath)) { throw new DirectoryNotFoundException(); }
-        var voiceFilePaths = Directory.GetFiles(voicesPath);
+        var voiceFilePaths = Directory.GetFiles(voicesPath, "*", SearchOption.AllDirectories);
 
         foreach (var filePath in voiceFilePaths) {
             if (!loadedFilePaths.Add(filePath) || !filePath.EndsWith(".npy")) { continue; }

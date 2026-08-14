@@ -1,4 +1,4 @@
-﻿namespace KokoroSharp;
+namespace KokoroSharp;
 
 using KokoroSharp.Core;
 using KokoroSharp.Processing;
@@ -26,6 +26,9 @@ public sealed partial class KokoroTTS : KokoroEngine {
     /// <remarks> Note that "Cancel" will NOT BE CALLED for packets whose playback never ever started. </remarks>
     public event Action<SpeechCancellationPacket> OnSpeechCanceled;
 
+    /// <summary> Callback raised in real time as each phoneme starts being spoken during playback. Useful for lip-sync (visemes) and word highlighting. </summary>
+    public event Action<PhonemeReachedPacket> OnPhonemeReached;
+
     /// <summary> If true, the output audio of the model will be *nicified* before being played back. </summary>
     /// <remarks> Nicification includes trimming silent start and finish, and attempting to reduce noise. </remarks>
     public bool NicifyAudio {
@@ -40,7 +43,7 @@ public sealed partial class KokoroTTS : KokoroEngine {
     /// <summary>
     /// Creates a new Kokoro TTS Engine instance, loading the model into memory and initializing a background worker thread to continuously scan for newly queued jobs, dispatching them in order, when it's free.
     /// <para> If 'options' is specified, the model will be loaded with them. This is particularly useful when needing to run on non-CPU backends, as the default backend otherwise is the CPU with 8 threads. </para>
-    /// <para> The model(s) can be found at https://github.com/taylorchu/kokoro-onnx/releases/tag/v0.2.0. </para>
+    /// <para> The model(s) can be found at https://github.com/Lyrcaxis/KokoroSharpBinaries/releases. </para>
     /// </summary>
     public KokoroTTS(string modelPath, SessionOptions options = null) : base(modelPath, options) { }
 
@@ -105,6 +108,18 @@ public sealed partial class KokoroTTS : KokoroEngine {
         handle.ReadyPlaybackHandles.Add(playbackHandle); // Mark the inference as "completed" and register the playback handle as "ready".
         handle.OnInferenceStepCompleted?.Invoke(step, playbackHandle); // Notify end users that the step is complete, and pass the handle.
 
+        // Relay playback progress as "phoneme reached" events when the model provided per-phoneme timings.
+        if (step.Timestamps != null) {
+            var nextPhonemeIndex = 0;
+            playbackHandle.OnDuringPlayback = currentSecond => {
+                while (nextPhonemeIndex < step.Timestamps.Length && currentSecond >= step.Timestamps[nextPhonemeIndex].StartSecond) {
+                    var packet = new PhonemeReachedPacket() { Timestamp = step.Timestamps[nextPhonemeIndex++], RelatedJob = job, RelatedStep = step };
+                    OnPhonemeReached?.Invoke(packet);
+                    handle.OnPhonemeReached?.Invoke(packet);
+                }
+            };
+        }
+
         // Finally, if the segment is gracefully ended with a punctuation token, add some pause to it, to emulate natural pause.
         bool shouldAddPause = NicifyAudio && pipelineConfig != null && step.Tokens.Any() && Tokenizer.PunctuationTokens.Contains(step.Tokens[^1]);
         if (shouldAddPause) {
@@ -137,7 +152,7 @@ public sealed partial class KokoroTTS : KokoroEngine {
                 var progressPacket = new SpeechProgressPacket() {
                     RelatedJob = job,
                     RelatedStep = step,
-                    SpokenText_BestGuess = step == job.Steps[^1] ? text : MakeBestGuess(1, phonemes),
+                    SpokenText = step == job.Steps[^1] ? text : GuessSpokenText(1, samples.Length / (float) 24_000, phonemes),
                     PhonemesSpoken = phonemes,
                 };
                 OnSpeechProgressed?.Invoke(progressPacket);
@@ -156,35 +171,34 @@ public sealed partial class KokoroTTS : KokoroEngine {
                 handle.OnSpeechCompleted?.Invoke(completionPacket);
             }
         }
-        void OnCanceledCallback((float time, float percentage) t) {
+        void OnCanceledCallback((float playedSeconds, float percentage) t) {
             if (OnSpeechCanceled == null && handle.OnSpeechCanceled == null) { return; }
-            // Let's assume the amount of spoken phonemes linearly matches the percentage.
-            var T = (int) Math.Round(step.Tokens.Length * t.percentage); // L * t
-            var phonemesSpokenGuess = step.Tokens.Take(T).Select(x => Tokenizer.TokenToChar[x]);
+            var spokenCount = SpeechGuesser.GuessSpokenTokenCount(step.Tokens, step.Timestamps, t.percentage, t.playedSeconds);
+            var phonemesSpokenGuess = step.Tokens.Take(spokenCount).Select(x => Tokenizer.TokenToChar[x]);
             var cancellationPacket = new SpeechCancellationPacket() {
                 RelatedJob = job,
                 RelatedStep = step,
-                SpokenText_BestGuess = MakeBestGuess(t.percentage, step.Tokens.Select(x => Tokenizer.TokenToChar[x]).ToArray()),
-                PhonemesSpoken_BestGuess = [.. phonemesCache, .. phonemesSpokenGuess],
-                PhonemesSpoken_PrevSegments_Certain = [.. phonemesCache],
-                PhonemesSpoken_LastSegment_BestGuess = [.. phonemesSpokenGuess]
+                SpokenText = GuessSpokenText(t.percentage, t.playedSeconds, step.Tokens.Select(x => Tokenizer.TokenToChar[x]).ToArray()),
+                PhonemesSpoken = [.. phonemesCache, .. phonemesSpokenGuess],
             };
             OnSpeechCanceled?.Invoke(cancellationPacket);
             handle.OnSpeechCanceled?.Invoke(cancellationPacket);
             phonemesCache.AddRange(phonemesSpokenGuess);
         }
 
-        string MakeBestGuess(float percentage, char[] segmentPhonemes) {
+        string GuessSpokenText(float percentage, float playedSeconds, char[] segmentPhonemes) {
             var packet = new SpeechInfoPacket() {
                 OriginalText = text,
                 AllTokens = allTokens,
                 AllPhonemes = allPhonemesToSpeak,
                 PreSpokenPhonemes = [.. phonemesCache],
                 SegmentPhonemes = segmentPhonemes,
+                SegmentTimestamps = step.Timestamps,
                 SegmentIndex = job.Steps.IndexOf(step),
-                SegmentCutT = percentage
+                SegmentCutT = percentage,
+                SegmentPlayedSeconds = playedSeconds
             };
-            return SpeechGuesser.GuessSpeech_LowEffort(packet, pipelineConfig);
+            return SpeechGuesser.GuessSpeech(packet);
         }
     }
 }

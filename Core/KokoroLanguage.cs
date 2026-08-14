@@ -21,7 +21,7 @@ public enum KokoroLanguage {
 public enum KokoroGender { Both, Male = 'm', Female = 'f' }
 
 public static class KokoroLangCodeHelper {
-    /// <summary> Maps the Kokoro Language (inferred from the voice's name) to the eSpeak NG langCode needed for proper phonemization. </summary>
+    /// <summary> Maps the Kokoro Language (inferred from the voice's name) to the langCode needed for proper phonemization. </summary>
     public static IReadOnlyDictionary<KokoroLanguage, string> KokoroLangToESpeakLangCodeMap { get; } = new Dictionary<KokoroLanguage, string>() {
         { KokoroLanguage.AmericanEnglish    , "en-us" },
         { KokoroLanguage.BritishEnglish     , "en-gb" },
@@ -53,10 +53,10 @@ public static class KokoroLangCodeHelper {
         return (KokoroLanguage) voice.Name[0];
     }
 
-    /// <summary> Retrieves the LangCode for eSpeak-NG, so text can be phonemized properly. </summary>
+    /// <summary> Retrieves the LangCode so text can be phonemized properly. </summary>
     /// <remarks> Note that this is inferred by the NAME of the voice, so make sure to follow naming conveniences. </remarks>
     public static string GetLangCode(this KokoroVoice voice) => KokoroLangToESpeakLangCodeMap[voice.GetLanguage()];
 
-    /// <summary> Retrieves the LangCode for eSpeak-NG, so text can be phonemized properly. </summary>
+    /// <summary> Retrieves the LangCode so text can be phonemized properly. </summary>
     public static string GetLangCode(this KokoroLanguage language) => KokoroLangToESpeakLangCodeMap[language];
 }

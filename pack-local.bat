@@ -13,12 +13,12 @@ rmdir /s /q _test_consumer 2>nul
 echo === Downloading content (if missing) ===
 if not exist "voices" (
     if not exist "release-assets" mkdir release-assets
-    curl -L -o release-assets/voices.zip https://github.com/Lyrcaxis/KokoroSharpBinaries/releases/download/v1.0.0/voices.zip
+    curl -L -o release-assets/voices.zip https://github.com/Lyrcaxis/KokoroSharpBinaries/releases/download/v2.0.0/voices.zip
     powershell -Command "Expand-Archive -Path release-assets/voices.zip -DestinationPath . -Force"
 )
 if not exist "espeak" (
     if not exist "release-assets" mkdir release-assets
-    curl -L -o release-assets/espeak.zip https://github.com/Lyrcaxis/KokoroSharpBinaries/releases/download/v1.0.0/espeak-ng-binaries-v1.52.zip
+    curl -L -o release-assets/espeak.zip https://github.com/Lyrcaxis/KokoroSharpBinaries/releases/download/v2.0.0/espeak-ng-binaries-v1.52.zip
     powershell -Command "Expand-Archive -Path release-assets/espeak.zip -DestinationPath . -Force"
 )
 

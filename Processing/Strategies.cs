@@ -68,29 +68,15 @@ public class PauseAfterSegmentStrategy {
 
 
 /// <summary>
-/// <para> Allows defining various rules helpful for customizing the default segmentation pipeline. Segmentation allows *chunking* the text so the first parts of it will be processed quicker. </para>
+/// <para> Allows customizing the default segmentation pipeline. Segmentation allows *chunking* the text so the first parts of it will be processed quicker. </para>
 /// <para> This is crucial to allow seamless audio playback, because follow-up chunks can be processed in the background while the audio output from the previous chunks is playing. </para>
 /// <para> <b>The general segmentation rules apply as follows:</b> </para>
-/// <para> - First, the algorithm tries segmenting on exact <see cref="PunctuationTokens"/>, within the allowed limits. </para>
-/// <para> - .. if there were no punctuation tokens available there, we try to segment on a <see cref="SegmentationSystem.spaceToken"/> that appears within the segment's range. </para>
-/// <para> - .. and if no space tokens were found either, we cut at the maximum allowed length. This may cut words in the middle, so plan accordingly. </para>
-/// <para> <i>Note: Do not use too small or too long numbers for these sequences. Usually the defaults will work for every machine with a small impact on initial response quality.</i> </para>
-/// <para> <i>It is recommended to provide your users with an option on whether they want SUPER FAST, or SUPER GOOD response, and provide different strategies. </i> </para>
+/// <para> - Line breaks ALWAYS end a segment, and a line that fits its segment's budget is never split further. </para>
+/// <para> - Oversized lines get cut at their latest sentence end within the budget, then latest comma, then latest space, and mid-word as the last resort. </para>
+/// <para> - Follow-up segments use the full model budget (510 tokens), since they process in the background while previous audio plays. </para>
 /// </summary>
 public class DefaultSegmentationConfig {
-    /// <summary> The minimum allowed length of the first segment. Ensures the first segment includes AT LEAST this many tokens. </summary>
-    /// <remarks> Recommended to keep this small, to allow instant responses. </remarks>
-    public int MinFirstSegmentLength = 10;
-
-    /// <summary> The maximum allowed length of the first segment. *NOTE: Having this too small might cut words in the middle* </summary>
-    /// <remarks> Recommended to keep this small, but not too small, to allow instant responses. </remarks>
-    public int MaxFirstSegmentLength = 100;
-
-    /// <summary> The maximum allowed length of the second segment. *NOTE: Having this too small might cut words in the middle* </summary>
-    /// <remarks> Recommended to be a reasonable size based on the first segment's expected length, for seamless audio playback. </remarks>
-    public int MaxSecondSegmentLength = 100;
-
-    /// <summary> The minimum allowed length of follow-up segments. Any 100% valid punctuation found after THIS many tokens will mark a new segment. </summary>
-    /// <remarks> These can be long since they'll be processed in the background while the audio is playing. *NOTE: Having this too high might delay "CANCEL" operations, since we can't cancel ongoing ONNX requests* </remarks>
-    public int MinFollowupSegmentsLength = 200;
+    /// <summary> The maximum allowed length of the first segment. Keeps the first inference small, so playback can start quickly. </summary>
+    /// <remarks> Lower it for snappier first response, or raise it towards 510 when latency doesn't matter, like offline synthesis. </remarks>
+    public int MaxFirstSegmentLength = 200;
 }
