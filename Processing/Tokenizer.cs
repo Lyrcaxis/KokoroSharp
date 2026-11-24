@@ -62,8 +62,8 @@ public static partial class Tokenizer {
     /// <summary> Converts the input text into the corresponding phonemes, with slight preprocessing and post-processing to preserve punctuation and other TTS essentials. </summary>
     /// <remarks> Phonemization happens per line, so line breaks survive into the phonemes for <see cref="SegmentationSystem"/> to pause on. </remarks>
     public static string Phonemize(string inputText, string langCode = "en-us", bool preprocess = true) {
-        if (preprocess) { inputText = string.Join(' ', PhonemeLiteral().Split(inputText).Select(part => PhonemeLiteral2().IsMatch(part) ? part : PreprocessText(part, langCode)).Where(part => part.Length > 0)); }
-        return string.Join('\n', inputText.Split('\n').Select(PhonemizeLine));
+        if (preprocess) { inputText = string.Join(" ", PhonemeLiteral.Split(inputText).Select(part => PhonemeLiteral2.IsMatch(part) ? part : PreprocessText(part, langCode)).Where(part => part.Length > 0)); }
+        return string.Join("\n", inputText.Split('\n').Select(PhonemizeLine));
 
         string PhonemizeLine(string line) {
             if (string.IsNullOrWhiteSpace(line)) { return ""; }
@@ -76,8 +76,8 @@ public static partial class Tokenizer {
             if (langCode is "es" or "fr" or "hi" or "it" or "pt-br") { // Kokoro's voices for these were trained on misaki's espeak pipeline, not raw espeak IPA.
                 // Phonemized entirely from MisakiSharp's measured espeak dump, with a letter-to-sound model for unknown words -- espeak is never spawned.
                 if (!espeakG2Ps.TryGetValue(langCode, out var g2p)) { espeakG2Ps[langCode] = g2p = new EspeakG2P(EspeakReplay.Provider(langCode)); }
-                var espeakParts = PhonemeLiteral().Split(line).Select(part => PhonemeLiteral2().Match(part) is { Success: true } m ? m.Groups[1].Value : g2p.Phonemize(part));
-                return new string(string.Join(' ', espeakParts.Where(part => part.Length > 0)).Where(Vocab.ContainsKey).ToArray());
+                var espeakParts = PhonemeLiteral.Split(line).Select(part => PhonemeLiteral2.Match(part) is { Success: true } m ? m.Groups[1].Value : g2p.Phonemize(part));
+                return new string(string.Join(" ", espeakParts.Where(part => part.Length > 0)).Where(Vocab.ContainsKey).ToArray());
             }
             Debug.WriteLine($"'{langCode}' is not one of Kokoro's nine languages, so there's nothing to phonemize with. Returning empty phonemes.");
             return "";
@@ -87,16 +87,16 @@ public static partial class Tokenizer {
     /// <summary> Normalizes the input text to what the Kokoro model would expect to see, preparing it for phonemization. </summary>
     /// <remarks> In addition, converts various "written" text to "spoken" form (e.g. $1 --> "one dollar" instead of "dollar one". </remarks>
     internal static string PreprocessText(string text, string langCode = "en-us") {
-        text = HeaderLink().Replace(text, "$1"); // Discard links appearing in `[Header](link)` format.
-        text = HeaderImgLink().Replace(text, "$1$2"); // And in [Header[(img](link)]
-        text = Money().Replace(text, "$2 $1 $3"); // Convert money amounts like "$1.50" to "1 $ 50".
-        text = Money2().Replace(text, "$1 $3 $2"); // Convert money amounts like "1.50€" to "1 € 50".
+        text = HeaderLink.Replace(text, "$1"); // Discard links appearing in `[Header](link)` format.
+        text = HeaderImgLink.Replace(text, "$1$2"); // And in [Header[(img](link)]
+        text = Money.Replace(text, "$2 $1 $3"); // Convert money amounts like "$1.50" to "1 $ 50".
+        text = Money2.Replace(text, "$1 $3 $2"); // Convert money amounts like "1.50€" to "1 € 50".
         for (int i = 0; i < 5; i++) {
-            text = DecimalPoint().Replace(text, m => $"{m.Groups[1]} point {string.Join<char>(' ', m.Groups[3].Value)}"); // Convert decimal points like "3.1415" to "3 point 1 4 1 5".
-            text = WebUrl().Replace(text, m => m.Value.Replace(".", " dot "));
+            text = DecimalPoint.Replace(text, m => $"{m.Groups[1]} point {string.Join<char>(" ", m.Groups[3].Value)}"); // Convert decimal points like "3.1415" to "3 point 1 4 1 5".
+            text = WebUrl.Replace(text, m => m.Value.Replace(".", " dot "));
         }
         text = text.Replace("\r\n", "\n");
-        text = CodeBlock().Replace(text, m => {
+        text = CodeBlock.Replace(text, m => {
             var lines = m.Groups[1].Value.Split('\n');
             for (int i = 0; i < lines.Length; i++) {
                 int com = Math.Max(lines[i].IndexOf("//"), lines[i].IndexOf("#"));
@@ -104,12 +104,12 @@ public static partial class Tokenizer {
             }
             return string.Join("\n", lines);
         });
-        text = CodeBlock().Replace(text, m => m.Groups[1].Value.Replace("  dot ", ".").Replace("dot \n", ".\n"));
-        text = TickQuote().Replace(text, m => m.Groups[1].Value.Replace(".", " dot "));
+        text = CodeBlock.Replace(text, m => m.Groups[1].Value.Replace("  dot ", ".").Replace("dot \n", ".\n"));
+        text = TickQuote.Replace(text, m => m.Groups[1].Value.Replace(".", " dot "));
         text = text.Replace("C#", "C SHARP").Replace(".NET", "dot net").Replace("->", " to ");
-        text = Approximately().Replace(text, "about "); // Convert "~5" to "about 5".
-        text = GroupingComma().Replace(text, ""); // Convert "15,000" to "15000"
-        text = ByteNumber().Replace(text, m => {
+        text = Approximately.Replace(text, "about "); // Convert "~5" to "about 5".
+        text = GroupingComma.Replace(text, ""); // Convert "15,000" to "15000"
+        text = ByteNumber.Replace(text, m => {
             string u = m.Groups[2].Value switch {
                 "KB" => " kilobyte",
                 "MB" => " megabyte",
@@ -130,11 +130,11 @@ public static partial class Tokenizer {
         text = text.Replace(".com", "dot com").Replace("https://", "https ");
         text = text.Replace("\r\n", "\n").Replace("**", "*").Replace("‘", "\"").Replace("’", "\"").Replace('।', '.').Replace('॥', '.');
         foreach (var c in currencies.Keys) { text = text.Replace(c.ToString(), $" {currencies[c]} "); } // Convert currency symbols to words (e.g., $ -> "dollar").
-        text = Doctor().Replace(text, "Doctor");
-        text = Mister().Replace(text, "Mister");
-        text = Miss().Replace(text, "Miss");
-        text = WhiteSpace().Replace(text," ");
-        text = Time().Replace(text, "$1 $2");
+        text = Doctor.Replace(text, "Doctor");
+        text = Mister.Replace(text, "Mister");
+        text = Miss.Replace(text, "Miss");
+        text = WhiteSpace.Replace(text," ");
+        text = Time.Replace(text, "$1 $2");
         text = text.Replace("{", ",").Replace("}", ",").Replace("(", ",").Replace(")", ",");
         var deletable = langCode is "en-us" or "en-gb" ? deletableCharacters.Where(c => c != '-') : deletableCharacters; // Misaki reads English "voice-loading" compounds glued, like espeak did.
         foreach (var c in deletable) { text = text.Replace(c.ToString(), " "); }
@@ -142,7 +142,7 @@ public static partial class Tokenizer {
             while (text.Contains($" {punc}")) { text = text.Replace($" {punc}", $"{punc}"); }
             text = text.Replace($"{punc}", $"{punc} ");
         }
-        while (text.Length > 0 && replaceablePhonemes.Contains(text[0]) || deletableCharacters.Any(text.StartsWith)) { text = text[1..]; }
+        while (text.Length > 0 && replaceablePhonemes.Contains(text[0]) || deletableCharacters.Any(c => text.StartsWith(c))) { text = text[1..]; }
         while (text.Contains("\n\n")) { text = text.Replace("\n\n", "\n"); }
         for (int i = 0; i < 10; i++) { text = text.Replace("  ", " "); }
 
@@ -151,26 +151,24 @@ public static partial class Tokenizer {
 
     #region Regexes
 
-    [GeneratedRegex(@"\b(https?://)?(www\.)?[a-zA-Z0-9]+\b|\b[a-zA-Z0-9]+\.(com|net|org|io|edu|gov|mil|info|biz|co|us|uk|ca|de|fr|jp|au|cn|ru|gr)\b")]
-                                                                     private static partial Regex WebUrl();
-    [GeneratedRegex(@"^```[A-Za-z]{0,10}\n([\s\S]*?)\n```(?:\n|$)", RegexOptions.Multiline)]
-                                                                     private static partial Regex CodeBlock();       // Markdown code blocks: ```csharp\ncode\n```
-    [GeneratedRegex(@"\[(.*?)\]\(.*?\)")]                            private static partial Regex HeaderLink();      // Markdown links: [Header](link)
-    [GeneratedRegex(@"\[.*?\[(.*?)\].*?\]\(.*?\)|\[(.*?)\]\(.*?\)")] private static partial Regex HeaderImgLink();   // Markdown image links: [Header[(img](link)]
-    [GeneratedRegex(@"(\d)(\.)(\d+)")]                               private static partial Regex DecimalPoint();    // Decimal point: 3.1415
-    [GeneratedRegex(@"(?<!`)`([^`]+)`(?!`)")]                        private static partial Regex TickQuote();       // Inline code: `code`
-    [GeneratedRegex(@"\b(\d+(?:\.\d+)?)(KB|MB|GB|TB)(\s)")]          private static partial Regex ByteNumber();      // Byte numbers: 1KB, 2.5MB, etc.
-    [GeneratedRegex(@"([$€£¥₹₽₩₺₫]) ?(\d+)(?:[\.,](\d+))?")]         private static partial Regex Money();           // Money amounts: $1, €2.50, etc.
-    [GeneratedRegex(@"(\d+)(?:[\.,](\d+))? ?([$€£¥₹₽₩₺₫])")]         private static partial Regex Money2();          // Money amounts: 1€, 2,50€, etc.
-    [GeneratedRegex(@"\bD[Rr]\.(?= [A-Z])")]                         private static partial Regex Doctor();          // Doctor: Dr. Smith
-    [GeneratedRegex(@"\b(Mr|MR)\.(?= [A-Z])")]                       private static partial Regex Mister();          // Mister: Mr. Smith
-    [GeneratedRegex(@"\b(Ms|MS)\.(?= [A-Z])")]                       private static partial Regex Miss();            // Miss: Ms. Smith
-    [GeneratedRegex(@"\x20{2,}")]                                    private static partial Regex WhiteSpace();      // Multiple spaces: "  "
-    [GeneratedRegex(@"(?<!\:)\b([1-9]|1[0-2]):([0-5]\d)\b(?!\:)")]   private static partial Regex Time();            // Time: 12:30, 9:45, etc.
-    [GeneratedRegex(@"~\s*(?=\d)")]                                  private static partial Regex Approximately();   // Approximate numbers: ~320
-    [GeneratedRegex(@"(?<=\d),(?=\d\d\d\b)")]                        private static partial Regex GroupingComma();   // Digit grouping: 15,000
-    [GeneratedRegex(@"(\[[^\]]+\]\(/[^/]+/\))")]                     private static partial Regex PhonemeLiteral();  // Literal Pronunciation: [Kokoro](/kˈOkəɹO/). Captures the entire string
-    [GeneratedRegex(@"\[[^\]]+\]\(/([^/]+)/\)")]                     private static partial Regex PhonemeLiteral2(); // Literal Pronunciation: [Kokoro](/kˈOkəɹO/). Captures only the phoneme part e.g. kˈOkəɹO
+    static readonly Regex WebUrl = new(@"\b(https?://)?(www\.)?[a-zA-Z0-9]+\b|\b[a-zA-Z0-9]+\.(com|net|org|io|edu|gov|mil|info|biz|co|us|uk|ca|de|fr|jp|au|cn|ru|gr)\b", RegexOptions.Compiled);
+    static readonly Regex CodeBlock = new(@"^```[A-Za-z]{0,10}\n([\s\S]*?)\n```(?:\n|$)", RegexOptions.Multiline | RegexOptions.Compiled); // Markdown code blocks: ```csharp\ncode\n```
+    static readonly Regex HeaderLink = new(@"\[(.*?)\]\(.*?\)", RegexOptions.Compiled);                          // Markdown links: [Header](link)
+    static readonly Regex HeaderImgLink = new(@"\[.*?\[(.*?)\].*?\]\(.*?\)|\[(.*?)\]\(.*?\)", RegexOptions.Compiled); // Markdown image links: [Header[(img](link)]
+    static readonly Regex DecimalPoint = new(@"(\d)(\.)(\d+)", RegexOptions.Compiled);                           // Decimal point: 3.1415
+    static readonly Regex TickQuote = new(@"(?<!`)`([^`]+)`(?!`)", RegexOptions.Compiled);                       // Inline code: `code`
+    static readonly Regex ByteNumber = new(@"\b(\d+(?:\.\d+)?)(KB|MB|GB|TB)(\s)", RegexOptions.Compiled);        // Byte numbers: 1KB, 2.5MB, etc.
+    static readonly Regex Money = new(@"([$€£¥₹₽₩₺₫]) ?(\d+)(?:[\.,](\d+))?", RegexOptions.Compiled);            // Money amounts: $1, €2.50, etc.
+    static readonly Regex Money2 = new(@"(\d+)(?:[\.,](\d+))? ?([$€£¥₹₽₩₺₫])", RegexOptions.Compiled);           // Money amounts: 1€, 2,50€, etc.
+    static readonly Regex Doctor = new(@"\bD[Rr]\.(?= [A-Z])", RegexOptions.Compiled);                           // Doctor: Dr. Smith
+    static readonly Regex Mister = new(@"\b(Mr|MR)\.(?= [A-Z])", RegexOptions.Compiled);                         // Mister: Mr. Smith
+    static readonly Regex Miss = new(@"\b(Ms|MS)\.(?= [A-Z])", RegexOptions.Compiled);                           // Miss: Ms. Smith
+    static readonly Regex WhiteSpace = new(@"\x20{2,}", RegexOptions.Compiled);                                  // Multiple spaces: "  "
+    static readonly Regex Time = new(@"(?<!\:)\b([1-9]|1[0-2]):([0-5]\d)\b(?!\:)", RegexOptions.Compiled);       // Time: 12:30, 9:45, etc.
+    static readonly Regex Approximately = new(@"~\s*(?=\d)", RegexOptions.Compiled);                             // Approximate numbers: ~320
+    static readonly Regex GroupingComma = new(@"(?<=\d),(?=\d\d\d\b)", RegexOptions.Compiled);                   // Digit grouping: 15,000
+    static readonly Regex PhonemeLiteral = new(@"(\[[^\]]+\]\(/[^/]+/\))", RegexOptions.Compiled);               // Literal Pronunciation: [Kokoro](/kˈOkəɹO/). Captures the entire string
+    static readonly Regex PhonemeLiteral2 = new(@"\[[^\]]+\]\(/([^/]+)/\)", RegexOptions.Compiled);              // Literal Pronunciation: [Kokoro](/kˈOkəɹO/). Captures only the phoneme part e.g. kˈOkəɹO
 
     #endregion Regexes
 }

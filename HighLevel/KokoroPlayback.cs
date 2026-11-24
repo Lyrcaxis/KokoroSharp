@@ -52,7 +52,7 @@ public sealed class KokoroPlayback : IDisposable {
     /// <summary> Enqueues specified audio samples for playback. They will be played once all previously queued samples have been played. </summary>
     /// <remarks> The callbacks will be raised appropriately during playback. Note that "Cancel" will NOT BE CALLED for playbacks that never started. </remarks>
     internal PlaybackHandle Enqueue(float[] samples, Action OnStarted = null, Action OnSpoken = null, Action<(float time, float percentage)> OnCanceled = null) {
-        ObjectDisposedException.ThrowIf(hasExited, this);
+        if (hasExited) { throw new ObjectDisposedException(nameof(KokoroPlayback)); } // (ObjectDisposedException.ThrowIf is net7+)
 
         var packet = new PlaybackHandle(samples, OnStarted, OnSpoken, OnCanceled) { Owner = this };
         queuedPackets.Enqueue(packet);
@@ -70,7 +70,7 @@ public sealed class KokoroPlayback : IDisposable {
     }
 
     /// <summary> Adjust the volume of the playback. [0.0, to 1.0] </summary>
-    public void SetVolume(float volume) => waveOut.SetVolume(Math.Clamp(volume, 0f, 1f));
+    public void SetVolume(float volume) => waveOut.SetVolume(Math.Min(Math.Max(volume, 0f), 1f));
 
     /// <summary> Immediately stops the playback and notifies the background worker thread to exit. </summary>
     /// <remarks> Note that this DOES NOT terminate any <see cref="KokoroJob"/>s related to this instance. </remarks>

@@ -1,11 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Library</OutputType>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks>
+        <LangVersion>12</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
+        <SuppressOnnxRuntimePlatformCompatibilityError>true</SuppressOnnxRuntimePlatformCompatibilityError>
+        <CopyLocalLockFileAssemblies Condition="'$(OutputType)' == 'Exe'">true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -17,11 +19,13 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.22.0" />
-        <PackageReference Include="MisakiSharp" Version="2.1.1" />
-        <PackageReference Include="NAudio" Version="2.2.1" />
+        <PackageReference Include="MisakiSharp" Version="2.2.0" />
+        <PackageReference Include="NAudio.Core" Version="2.2.1" />
+        <PackageReference Include="NAudio.WinMM" Version="2.2.1" />
         <PackageReference Include="NumSharp" Version="0.30.0" />
-        <PackageReference Include="OpenTK.Audio.OpenAL" Version="5.0.0-pre.13" />
+        <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.23.1" />
         <PackageReference Include="System.Numerics.Tensors" Version="9.0.5" />
+        <PackageReference Include="PolySharp" Version="1.14.1" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>

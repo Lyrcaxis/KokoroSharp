@@ -6,6 +6,7 @@ using KokoroSharp.Core;
 using KokoroSharp.Utilities;
 
 /// <summary> The Android entry point of KokoroSharp. Call <see cref="Init"/> once on startup, before creating any engine or playback instance. </summary>
+[System.Runtime.Versioning.SupportedOSPlatform("android26.0")]
 public static class KokoroSharpAndroid {
     /// <summary> Prepares KokoroSharp for Android: extracts the APK-bundled voices to app storage, loads them, and registers the <see cref="AndroidAudioTrackPlayer"/>. </summary>
     /// <remarks> Also moves the working directory to app storage, so the model downloads land somewhere writable. </remarks>

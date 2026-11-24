@@ -63,7 +63,7 @@ public class KokoroJob {
         public Action<float[]> OnStepComplete { get; set; }
 
         public KokoroJobStep(int[] tokens, float[,,] voiceStyle, float speed, Action<float[]> OnComplete) {
-            if (tokens.Length > KokoroModel.maxTokens) { tokens = tokens[..KokoroModel.maxTokens]; }
+            if (tokens.Length > KokoroModel.maxTokens) { tokens = tokens.Take(KokoroModel.maxTokens).ToArray(); }
             (Tokens, VoiceStyle, Speed) = (tokens, voiceStyle, speed);
             OnStepComplete = OnComplete;
         }

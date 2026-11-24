@@ -32,8 +32,9 @@ public static class SegmentationSystem {
             while (end < tokens.Length && (tokens[end] == NLToken || tokens[end] == SpaceToken)) { end++; } // Paragraph gaps ride with the previous segment, as a longer pause.
             int stop = end;
             while (stop > at && tokens[stop - 1] == SpaceToken) { stop--; }
-            if (stop > at && !tokens[at..stop].All(t => t == NLToken || t == SpaceToken)) { segments.Add(tokens[at..stop]); }
-            Debug.WriteLine($"[{segments.Count}](+{end - at} [{at}/{tokens.Length}]): {new string(tokens[at..stop].Select(x => TokenToChar[x]).ToArray())}".Replace("\n", "®"));
+            var segment = tokens.Skip(at).Take(stop - at).ToArray(); // (was tokens[at..stop]; array ranges need net-only compiler support)
+            if (segment.Length > 0 && !segment.All(t => t == NLToken || t == SpaceToken)) { segments.Add(segment); }
+            Debug.WriteLine($"[{segments.Count}](+{end - at} [{at}/{tokens.Length}]): {new string(segment.Select(x => TokenToChar[x]).ToArray())}".Replace("\n", "®"));
             at = end;
         }
         return segments;

@@ -38,6 +38,7 @@ public static class KokoroLoader {
         if (File.Exists(path)) { return path; }
 
         // Otherwise, download it to disk.
+        System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
         using var client = new HttpClient();
         using var response = await client.GetAsync(URL(model), HttpCompletionOption.ResponseHeadersRead);
         using var responseStream = await response.Content.ReadAsStreamAsync();
@@ -45,13 +46,14 @@ public static class KokoroLoader {
         var fileSize = response.Content.Headers.ContentLength ?? 400_000_000L;
         var (buffer, bytesRead, totalRead) = (new byte[8192], 0, 0L);
         using (var fs = new FileStream($"{path}.tmp", FileMode.Create, FileAccess.Write)) {
-            while ((bytesRead = await responseStream.ReadAsync(buffer)) > 0) {
+            while ((bytesRead = await responseStream.ReadAsync(buffer, 0, buffer.Length)) > 0) {
                 totalRead += bytesRead;
                 fs.Write(buffer, 0, bytesRead);
                 OnDownloadProgress?.Invoke(totalRead / (float) fileSize);
             }
         }
-        File.Move($"{path}.tmp", path, overwrite: true);
+        if (File.Exists(path)) { File.Delete(path); } // File.Move's 'overwrite' parameter is netcore3+.
+        File.Move($"{path}.tmp", path);
         return path;
     }
 }

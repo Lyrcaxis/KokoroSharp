@@ -10,6 +10,9 @@ on:
 jobs:
     publish:
         runs-on: ubuntu-latest
+        permissions:
+            id-token: write
+            contents: read
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-dotnet@v4
@@ -26,9 +29,7 @@ jobs:
               run: |
                   mkdir -p release-assets
                   curl -L -o release-assets/voices.zip https://github.com/Lyrcaxis/KokoroSharpBinaries/releases/download/v2.0.0/voices.zip
-                  curl -L -o release-assets/espeak.zip https://github.com/Lyrcaxis/KokoroSharpBinaries/releases/download/v2.0.0/espeak-ng-binaries-v1.52.zip
                   unzip release-assets/voices.zip -d .
-                  unzip release-assets/espeak.zip -d .
 
             - name: Pack and build projects
               run: |
@@ -44,5 +45,11 @@ jobs:
                 for project_path in "${PROJECTS[@]:1}"; do dotnet sln KokoroSharp.sln add "$project_path"; done # Add all projects to the solution
                 for project_path in "${PROJECTS[@]}"; do dotnet pack "$project_path" -c Release -o ./packed_nupkgs; done # Pack all projects into nupkgs
             
+            - name: Get temporary NuGet key
+              uses: NuGet/login@v1
+              id: login
+              with:
+                  user: Lyrcaxis
+
             - name: Publish to NuGet
-              run: dotnet nuget push ./packed_nupkgs/*.nupkg -k ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+              run: dotnet nuget push ./packed_nupkgs/*.nupkg -k ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

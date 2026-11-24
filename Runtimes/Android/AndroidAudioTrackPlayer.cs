@@ -4,10 +4,13 @@ using Android.Media;
 
 using NAudio.Wave;
 
+using System.Runtime.Versioning;
+
 using AndroidEncoding = Android.Media.Encoding;
 using PlaybackState = NAudio.Wave.PlaybackState;
 
 /// <summary> Plays audio through Android's own <see cref="AudioTrack"/> API. Registered by <see cref="KokoroSharpAndroid.Init"/>. </summary>
+[SupportedOSPlatform("android26.0")]
 public class AndroidAudioTrackPlayer : KokoroWaveOutEvent {
     AudioTrack audioTrack;
     Thread streamThread;
